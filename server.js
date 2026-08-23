@@ -1,3 +1,4 @@
+const fs = require('fs');
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
@@ -20,8 +21,12 @@ app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
 app.use(cookieParser());
 
-// Serve Static Frontend
-app.use(express.static(path.join(__dirname, 'public')));
+// Serve Static Frontend (Support both bundled pkg snapshot and external public folder)
+const staticPath = (process.pkg && fs.existsSync(path.join(path.dirname(process.execPath), 'public')))
+    ? path.join(path.dirname(process.execPath), 'public')
+    : path.join(__dirname, 'public');
+
+app.use(express.static(staticPath));
 
 // API Routes
 app.use('/api/auth', authRoutes);
@@ -33,7 +38,7 @@ app.use('/api/export', exportRoutes);
 
 // Fallback to index.html for SPA routing
 app.get('*', (req, res) => {
-    res.sendFile(path.join(__dirname, 'public', 'index.html'));
+    res.sendFile(path.join(staticPath, 'index.html'));
 });
 
 // Initialize Database & Start Server

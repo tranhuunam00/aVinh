@@ -13,7 +13,18 @@
     "pm2:monit": "pm2 monit",
     "migrate": "node scripts/migrator.js",
     "migrate:status": "node scripts/migrator.js --status",
+    "build:exe": "npx pkg . --targets node18-win-x64 --output dist/vinmec-server.exe && npx pkg migrate.js --targets node18-win-x64 --output dist/vinmec-migrate.exe",
     "test": "node tests/all_6_kpis.test.js"
+  },
+  "bin": "server.js",
+  "pkg": {
+    "scripts": [
+      "src/**/*.js",
+      "migrations/**/*.js"
+    ],
+    "assets": [
+      "public/**/*"
+    ]
   },
   "keywords": [
     "vinmec",

@@ -4,7 +4,8 @@ const sqlite3 = require('sqlite3').verbose();
 const bcrypt = require('bcryptjs');
 const MASTER_DATA = require('./masterData');
 
-const DATA_DIR = path.join(__dirname, '..', '..', 'data');
+const appRoot = process.pkg ? path.dirname(process.execPath) : path.join(__dirname, '..', '..');
+const DATA_DIR = path.join(appRoot, 'data');
 if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
 }

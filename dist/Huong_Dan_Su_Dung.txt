@@ -1,0 +1,94 @@
+========================================================================
+🏥 HỆ THỐNG BÁO CÁO GIAO BAN NGÀY - VINMEC OCEAN PARK 2
+========================================================================
+
+1. CÁCH KHỞI ĐỘNG HỆ THỐNG:
+------------------------------------------------------------------------
+- Nhấp đúp chuột vào file: "Chay_Server.bat" (hoặc "vinmec-server.exe").
+- Hệ thống sẽ tự động bật và tự mở trang Web trên trình duyệt.
+- Giữ cửa sổ màu đen luôn mở trong suốt quá trình các khoa nhập liệu.
+
+
+2. HƯỚNG DẪN MỞ CỔNG TƯỜNG LỬA ĐỂ CÁC MÁY TRONG MẠNG LAN TRUY CẬP:
+------------------------------------------------------------------------
+* BƯỚC 1: Mở cổng 4001 trên máy chủ (Chọn 1 trong 3 cách sau):
+  + Cách A (Nhanh nhất - 1 click):
+    Nhấp chuột phải vào file "Mo_Cong_Firewall.bat" -> Chọn "Run as administrator" (Chạy với quyền quản trị viên).
+  
+  + Cách B (Bằng lệnh PowerShell):
+    Mở PowerShell với quyền Admin và dán lệnh sau:
+    netsh advfirewall firewall add rule name="Vinmec Port 4001" dir=in action=allow protocol=TCP localport=4001 profile=any
+
+  + Cách C (Thủ công qua giao diện Windows):
+    1. Nhấn phím Windows, gõ "Windows Defender Firewall" -> chọn "Advanced settings".
+    2. Chọn "Inbound Rules" (ở cột trái) -> bấm "New Rule..." (ở cột phải).
+    3. Chọn "Port" -> bấm Next.
+    4. Chọn "TCP", ô Specific local ports điền: 4001 -> bấm Next.
+    5. Chọn "Allow the connection" -> bấm Next.
+    6. Tích chọn cả 3 ô (Domain, Private, Public) -> bấm Next.
+    7. Đặt tên: "Vinmec Port 4001" -> bấm Finish.
+
+* BƯỚC 2: Kiểm tra loại mạng (Network Profile):
+  - Bấm vào biểu tượng Wi-Fi/Mạng dây góc dưới cùng bên phải màn hình.
+  - Chọn tên mạng đang kết nối -> Chọn Properties.
+  - Tại mục "Network profile type", chuyển sang "Private network" (Mạng riêng tư).
+
+* BƯỚC 3: Lấy địa chỉ IP của máy chủ:
+  - Nhấn phím Windows + R, gõ "cmd" -> Enter.
+  - Gõ lệnh: ipconfig -> Enter.
+  - Tìm dòng "IPv4 Address" (Ví dụ: 192.168.1.150 hoặc 10.x.x.x).
+
+
+3. ĐỊA CHỈ TRUY CẬP DÀNH CHO CÁC KHOA:
+------------------------------------------------------------------------
+- Truy cập ngay trên máy chủ:
+  http://localhost:4001
+
+- Truy cập từ các máy tính/điện thoại khác trong mạng nội bộ viện:
+  http://<IP_MÁY_CHỦ>:4001
+  (Ví dụ máy chủ có IP 192.168.1.150 thì gửi link: http://192.168.1.150:4001)
+
+
+4. DANH SÁCH TÀI KHOẢN ĐĂNG NHẬP:
+------------------------------------------------------------------------
+A. Tài khoản Quản Trị Toàn Viện (Admin):
+- Tên đăng nhập: admin
+- Mật khẩu     : Vinmec@2026
+
+B. 17 Tài khoản Khoa chuyên môn:
+- Mật khẩu chung cho tất cả các khoa: 123456
+- Tên đăng nhập từng khoa:
+  1. Khoa Cấp Cứu              : baocao_capcuu
+  2. Khoa Khám Bệnh            : baocao_khambenh
+  3. Khoa Răng Hàm Mặt         : baocao_ranghammat
+  4. Khoa Tai Mũi Họng         : baocao_taimuihong
+  5. Khoa Nhãn Khoa            : baocao_nhankhoa
+  6. Khoa Da Liễu              : baocao_dalieu
+  7. Khoa Vaccine              : baocao_vaccine
+  8. Khoa Nội Tổng Hợp         : baocao_noi
+  9. Khoa Ngoại Tổng Hợp       : baocao_ngoai
+  10. Khoa Chấn Thương Chỉnh Hình: baocao_ctch
+  11. Khoa Thần Kinh Cột Sống  : baocao_tkcs
+  12. Khoa Phục Hồi Chức Năng  : baocao_phcn
+  13. Khoa Phụ Sản             : baocao_san
+  14. Khoa Nhi Sơ Sinh         : baocao_nhi
+  15. Khoa Xét Nghiệm          : baocao_xetnghiem
+  16. Khoa Chẩn Đoán Hình Ảnh  : baocao_cdha
+  17. Khoa Điện Quang Can Thiệp: baocao_dqct
+
+
+5. CÁCH GEN / BUILD LẠI FILE .EXE KHI UPDATE CODE:
+------------------------------------------------------------------------
+Khi bạn chỉnh sửa code Frontend, Backend hoặc Migration và muốn tạo lại file .exe mới:
+
+- Cách 1 (1-Click nhanh nhất):
+  Nhấp đúp chuột vào file: "build_exe.bat" (ở thư mục gốc dự án).
+
+- Cách 2 (Dùng lệnh terminal):
+  Mở cmd hoặc PowerShell tại thư mục dự án và chạy:
+  npm run build:exe
+
+-> File .exe mới sẽ tự động được cập nhật trong thư mục "dist/":
+   + dist/vinmec-server.exe
+   + dist/vinmec-migrate.exe
+========================================================================

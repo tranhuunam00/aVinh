@@ -14,15 +14,25 @@ const fs = require('fs');
 const path = require('path');
 const sqlite3 = require('sqlite3').verbose();
 
-const DATA_DIR = path.join(__dirname, '..', 'data');
+const appRoot = process.pkg ? path.dirname(process.execPath) : path.join(__dirname, '..');
+const DATA_DIR = path.join(appRoot, 'data');
 if (!fs.existsSync(DATA_DIR)) {
     fs.mkdirSync(DATA_DIR, { recursive: true });
 }
 
 const DB_PATH = path.join(DATA_DIR, 'vinmec.sqlite');
-const MIGRATIONS_DIR = path.join(__dirname, '..', 'migrations');
+const MIGRATIONS_DIR = (process.pkg && fs.existsSync(path.join(path.dirname(process.execPath), 'migrations')))
+    ? path.join(path.dirname(process.execPath), 'migrations')
+    : path.join(__dirname, '..', 'migrations');
 
 const db = new sqlite3.Database(DB_PATH);
+
+// Registry of built-in migrations for self-contained single .exe binary
+const BUILTIN_MIGRATIONS = [
+    { name: '001_initial_schema', module: require('../migrations/001_initial_schema') },
+    { name: '002_clean_demo_and_standardize_accounts', module: require('../migrations/002_clean_demo_and_standardize_accounts') },
+    { name: '003_reset_department_passwords_to_123456', module: require('../migrations/003_reset_department_passwords_to_123456') }
+];
 
 function run(sql, params = []) {
     return new Promise((resolve, reject) => {
@@ -63,16 +73,27 @@ async function ensureMigrationTable() {
     `);
 }
 
-function getMigrationFiles() {
-    if (!fs.existsSync(MIGRATIONS_DIR)) return [];
-    return fs.readdirSync(MIGRATIONS_DIR)
-        .filter(f => f.endsWith('.js'))
-        .sort();
+function getAllMigrations() {
+    const map = new Map();
+    BUILTIN_MIGRATIONS.forEach(m => map.set(m.name, m.module));
+
+    if (fs.existsSync(MIGRATIONS_DIR)) {
+        const files = fs.readdirSync(MIGRATIONS_DIR).filter(f => f.endsWith('.js')).sort();
+        for (const file of files) {
+            const name = file.replace('.js', '');
+            if (!map.has(name)) {
+                try {
+                    map.set(name, require(path.join(MIGRATIONS_DIR, file)));
+                } catch (e) {}
+            }
+        }
+    }
+    return Array.from(map.entries()).map(([name, module]) => ({ name, module }));
 }
 
 async function showStatus() {
     await ensureMigrationTable();
-    const files = getMigrationFiles();
+    const migrations = getAllMigrations();
     const executedRows = await all("SELECT name, batch, executed_at FROM _migrations ORDER BY id ASC");
     const executedMap = new Map();
     executedRows.forEach(r => executedMap.set(r.name, r));
@@ -80,12 +101,12 @@ async function showStatus() {
     console.log('\n========================================================================================');
     console.log(' 📋 TRẠNG THÁI CÁC BẢN MIGRATION TRONG CƠ SỞ DỮ LIỆU');
     console.log('========================================================================================');
-    console.log(' Tên file migration                               | Trạng thái  | Batch | Thời gian chạy');
+    console.log(' Tên migration                                    | Trạng thái  | Batch | Thời gian chạy');
     console.log('--------------------------------------------------+-------------+-------+-------------------------');
 
-    for (const file of files) {
-        const migName = file.replace('.js', '');
-        const execInfo = executedMap.get(migName) || executedMap.get(file);
+    for (const m of migrations) {
+        const migName = m.name;
+        const execInfo = executedMap.get(migName);
         if (execInfo) {
             const timeStr = new Date(execInfo.executed_at).toLocaleString('vi-VN');
             console.log(` ✅ ${migName.padEnd(46)} | ĐÃ CHẠY    |   ${execInfo.batch}   | ${timeStr}`);
@@ -98,16 +119,13 @@ async function showStatus() {
 
 async function runPendingMigrations() {
     await ensureMigrationTable();
-    const files = getMigrationFiles();
+    const migrations = getAllMigrations();
     const executedRows = await all("SELECT name FROM _migrations");
     const executedSet = new Set(executedRows.map(r => r.name));
 
-    const pendingFiles = files.filter(f => {
-        const migName = f.replace('.js', '');
-        return !executedSet.has(migName) && !executedSet.has(f);
-    });
+    const pending = migrations.filter(m => !executedSet.has(m.name));
 
-    if (pendingFiles.length === 0) {
+    if (pending.length === 0) {
         console.log('\n========================================================================================');
         console.log(' ✨ CƠ SỞ DỮ LIỆU ĐÃ Ở PHIÊN BẢN MỚI NHẤT!');
         console.log('    Tất cả các bản migration trước đó đã được áp dụng.');
@@ -133,15 +151,14 @@ async function runPendingMigrations() {
     const nextBatch = (maxBatchRow && maxBatchRow.max_batch ? maxBatchRow.max_batch : 0) + 1;
 
     console.log('\n========================================================================================');
-    console.log(` 🚀 ĐANG ÁP DỤNG ${pendingFiles.length} BẢN MIGRATION MỚI (Batch #${nextBatch})`);
+    console.log(` 🚀 ĐANG ÁP DỤNG ${pending.length} BẢN MIGRATION MỚI (Batch #${nextBatch})`);
     console.log('========================================================================================');
 
-    for (const file of pendingFiles) {
-        const filePath = path.join(MIGRATIONS_DIR, file);
-        const migration = require(filePath);
-        const migName = migration.name || file.replace('.js', '');
+    for (const m of pending) {
+        const migName = m.name;
+        const migration = m.module;
 
-        console.log(`\n▶️  Đang chạy: ${file}...`);
+        console.log(`\n▶️  Đang chạy: ${migName}...`);
         const startTime = Date.now();
 
         await migration.up({ run, get, all });
@@ -178,6 +195,7 @@ if (require.main === module) {
 }
 
 module.exports = {
+    main,
     runPendingMigrations,
     showStatus
 };

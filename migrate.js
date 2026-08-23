@@ -4,4 +4,5 @@
  *   node migrate.js            (Run pending migrations)
  *   node migrate.js --status   (Check migration status)
  */
-require('./scripts/migrator');
+const { main } = require('./scripts/migrator');
+main();
