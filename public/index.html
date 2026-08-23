@@ -15,6 +15,9 @@
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
+    <!-- Toast Notification Container (Global for Login & Main App) -->
+    <div id="toastContainer" class="toast-container"></div>
+
     <!-- ========================================================================= -->
     <!-- LOGIN SCREEN (If not authenticated) -->
     <!-- ========================================================================= -->
@@ -37,6 +40,12 @@
             </div>
 
             <form id="loginForm" class="auth-form">
+                <!-- Inline Error Alert -->
+                <div id="loginErrorAlert" class="auth-error-alert" style="display: none;">
+                    <i class="fa-solid fa-circle-exclamation"></i>
+                    <span id="loginErrorText">Tên đăng nhập hoặc mật khẩu không chính xác</span>
+                </div>
+
                 <div class="form-group">
                     <label for="loginUsername"><i class="fa-solid fa-user-circle"></i> Tên đăng nhập</label>
                     <div class="input-with-icon">
@@ -49,7 +58,10 @@
                     <label for="loginPassword"><i class="fa-solid fa-lock"></i> Mật khẩu</label>
                     <div class="input-with-icon">
                         <i class="fa-solid fa-key input-icon"></i>
-                        <input type="password" id="loginPassword" class="form-control form-control-lg pl-icon" placeholder="Nhập mật khẩu..." required autocomplete="current-password">
+                        <input type="password" id="loginPassword" class="form-control form-control-lg pl-icon pr-icon" placeholder="Nhập mật khẩu..." required autocomplete="current-password">
+                        <button type="button" class="btn-toggle-password" data-target="loginPassword" title="Hiện/ẩn mật khẩu">
+                            <i class="fa-regular fa-eye"></i>
+                        </button>
                     </div>
                 </div>
 
@@ -142,9 +154,6 @@
 
         <!-- Main Content Pane -->
         <main class="main-content">
-            <!-- Toast Notification Container -->
-            <div id="toastContainer" class="toast-container"></div>
-
             <!-- ============================================ -->
             <!-- TAB 1: FORM NHẬP LIỆU KHOA / PHÒNG -->
             <!-- ============================================ -->
@@ -1203,19 +1212,39 @@
             <form id="changePasswordForm">
                 <div class="form-group">
                     <label for="currentPass">Mật khẩu hiện tại <span class="required">*</span></label>
-                    <input type="password" id="currentPass" class="form-control" required>
+                    <div class="input-with-icon">
+                        <i class="fa-solid fa-lock input-icon"></i>
+                        <input type="password" id="currentPass" class="form-control pl-icon pr-icon" placeholder="Nhập mật khẩu hiện tại..." required>
+                        <button type="button" class="btn-toggle-password" data-target="currentPass" title="Hiện/ẩn mật khẩu">
+                            <i class="fa-regular fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="newPass">Mật khẩu mới (tối thiểu 6 ký tự) <span class="required">*</span></label>
-                    <input type="password" id="newPass" class="form-control" required>
+                    <div class="input-with-icon">
+                        <i class="fa-solid fa-key input-icon"></i>
+                        <input type="password" id="newPass" class="form-control pl-icon pr-icon" placeholder="Nhập mật khẩu mới..." required minlength="6">
+                        <button type="button" class="btn-toggle-password" data-target="newPass" title="Hiện/ẩn mật khẩu">
+                            <i class="fa-regular fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
                 <div class="form-group">
                     <label for="confirmPass">Xác nhận mật khẩu mới <span class="required">*</span></label>
-                    <input type="password" id="confirmPass" class="form-control" required>
+                    <div class="input-with-icon">
+                        <i class="fa-solid fa-shield-halved input-icon"></i>
+                        <input type="password" id="confirmPass" class="form-control pl-icon pr-icon" placeholder="Nhập lại mật khẩu mới..." required minlength="6">
+                        <button type="button" class="btn-toggle-password" data-target="confirmPass" title="Hiện/ẩn mật khẩu">
+                            <i class="fa-regular fa-eye"></i>
+                        </button>
+                    </div>
                 </div>
                 <div class="modal-footer">
                     <button type="button" class="btn btn-secondary" id="btnCancelChangePass">Hủy</button>
-                    <button type="submit" class="btn btn-primary">Cập Nhật Mật Khẩu</button>
+                    <button type="submit" class="btn btn-primary" id="btnSubmitChangePass">
+                        <i class="fa-solid fa-check"></i> Cập Nhật Mật Khẩu
+                    </button>
                 </div>
             </form>
         </div>

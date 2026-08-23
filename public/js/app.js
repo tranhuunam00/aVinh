@@ -218,12 +218,62 @@ document.addEventListener('DOMContentLoaded', () => {
         loadDashboardData();
     }
 
+    const loginErrorAlert = document.getElementById('loginErrorAlert');
+    const loginErrorText = document.getElementById('loginErrorText');
+    const loginBox = document.querySelector('.auth-box');
+    const btnLoginSubmit = document.getElementById('btnLoginSubmit');
+
+    // Clear error highlights when user types in login fields
+    [loginUsername, loginPassword].forEach(input => {
+        if (input) {
+            input.addEventListener('input', () => {
+                if (loginErrorAlert) loginErrorAlert.style.display = 'none';
+                loginUsername.classList.remove('input-error');
+                loginPassword.classList.remove('input-error');
+            });
+        }
+    });
+
+    // Password visibility toggles across the entire app
+    document.querySelectorAll('.btn-toggle-password').forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.preventDefault();
+            const targetId = btn.dataset.target;
+            const input = document.getElementById(targetId);
+            if (!input) return;
+            const icon = btn.querySelector('i');
+            if (input.type === 'password') {
+                input.type = 'text';
+                if (icon) {
+                    icon.classList.remove('fa-eye');
+                    icon.classList.add('fa-eye-slash');
+                }
+            } else {
+                input.type = 'password';
+                if (icon) {
+                    icon.classList.remove('fa-eye-slash');
+                    icon.classList.add('fa-eye');
+                }
+            }
+        });
+    });
+
     loginForm.addEventListener('submit', async (e) => {
         e.preventDefault();
         const username = loginUsername.value.trim();
         const password = loginPassword.value;
+        const originalBtnHtml = btnLoginSubmit ? btnLoginSubmit.innerHTML : 'ĐĂNG NHẬP HỆ THỐNG';
+
+        if (loginErrorAlert) loginErrorAlert.style.display = 'none';
+        loginUsername.classList.remove('input-error');
+        loginPassword.classList.remove('input-error');
 
         try {
+            if (btnLoginSubmit) {
+                btnLoginSubmit.disabled = true;
+                btnLoginSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> ĐANG ĐĂNG NHẬP...';
+            }
+
             const res = await fetch('/api/auth/login', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -238,10 +288,32 @@ document.addEventListener('DOMContentLoaded', () => {
                 showToast(`Chào mừng ${data.user.full_name} đăng nhập thành công!`, 'success');
                 showMainApp();
             } else {
-                showToast(data.error || 'Đăng nhập không thành công', 'error');
+                const errMsg = data.error || 'Tên đăng nhập hoặc mật khẩu không chính xác';
+                if (loginErrorAlert && loginErrorText) {
+                    loginErrorText.textContent = errMsg;
+                    loginErrorAlert.style.display = 'flex';
+                }
+                loginPassword.classList.add('input-error');
+                if (loginBox) {
+                    loginBox.classList.remove('shake-box');
+                    void loginBox.offsetWidth; // Trigger reflow for animation restart
+                    loginBox.classList.add('shake-box');
+                }
+                showToast(errMsg, 'error');
+                loginPassword.select();
             }
         } catch (err) {
-            showToast('Lỗi kết nối máy chủ: ' + err.message, 'error');
+            const errMsg = 'Lỗi kết nối máy chủ: ' + err.message;
+            if (loginErrorAlert && loginErrorText) {
+                loginErrorText.textContent = errMsg;
+                loginErrorAlert.style.display = 'flex';
+            }
+            showToast(errMsg, 'error');
+        } finally {
+            if (btnLoginSubmit) {
+                btnLoginSubmit.disabled = false;
+                btnLoginSubmit.innerHTML = originalBtnHtml;
+            }
         }
     });
 
@@ -257,6 +329,9 @@ document.addEventListener('DOMContentLoaded', () => {
     userBadgeBtn.addEventListener('click', (e) => {
         e.stopPropagation();
         userDropdown.classList.toggle('show');
+    });
+    userDropdown.addEventListener('click', (e) => {
+        e.stopPropagation();
     });
     document.addEventListener('click', () => {
         userDropdown.classList.remove('show');
@@ -2369,8 +2444,18 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // Change Password Modal Handlers
+    const btnSubmitChangePass = document.getElementById('btnSubmitChangePass');
+
     btnOpenChangePass.addEventListener('click', () => {
         changePasswordForm.reset();
+        ['currentPass', 'newPass', 'confirmPass'].forEach(id => {
+            const input = document.getElementById(id);
+            if (input) input.type = 'password';
+        });
+        document.querySelectorAll('#changePasswordModal .btn-toggle-password i').forEach(icon => {
+            icon.classList.remove('fa-eye-slash');
+            icon.classList.add('fa-eye');
+        });
         userDropdown.classList.remove('show');
         changePasswordModal.style.display = 'flex';
     });
@@ -2380,6 +2465,11 @@ document.addEventListener('DOMContentLoaded', () => {
     btnCancelChangePass.addEventListener('click', () => {
         changePasswordModal.style.display = 'none';
     });
+    changePasswordModal.addEventListener('click', (e) => {
+        if (e.target === changePasswordModal) {
+            changePasswordModal.style.display = 'none';
+        }
+    });
 
     changePasswordForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -2387,12 +2477,22 @@ document.addEventListener('DOMContentLoaded', () => {
         const newPass = document.getElementById('newPass').value;
         const confirmPass = document.getElementById('confirmPass').value;
 
+        if (newPass.length < 6) {
+            showToast('Mật khẩu mới phải có tối thiểu 6 ký tự!', 'error');
+            return;
+        }
+
         if (newPass !== confirmPass) {
             showToast('Xác nhận mật khẩu mới không khớp!', 'error');
             return;
         }
 
         try {
+            if (btnSubmitChangePass) {
+                btnSubmitChangePass.disabled = true;
+                btnSubmitChangePass.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang cập nhật...';
+            }
+
             const res = await apiRequest('/api/auth/change-password', {
                 method: 'POST',
                 body: { current_password: currentPass, new_password: newPass }
@@ -2402,11 +2502,17 @@ document.addEventListener('DOMContentLoaded', () => {
             if (res.ok) {
                 showToast(data.message || 'Đổi mật khẩu thành công!', 'success');
                 changePasswordModal.style.display = 'none';
+                changePasswordForm.reset();
             } else {
                 showToast(data.error || 'Lỗi đổi mật khẩu', 'error');
             }
         } catch (err) {
             showToast('Lỗi máy chủ: ' + err.message, 'error');
+        } finally {
+            if (btnSubmitChangePass) {
+                btnSubmitChangePass.disabled = false;
+                btnSubmitChangePass.innerHTML = '<i class="fa-solid fa-check"></i> Cập Nhật Mật Khẩu';
+            }
         }
     });
 

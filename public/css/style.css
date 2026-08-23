@@ -177,6 +177,66 @@ body {
     padding-left: 40px !important;
 }
 
+.pr-icon {
+    padding-right: 40px !important;
+}
+
+.btn-toggle-password {
+    position: absolute;
+    right: 12px;
+    background: transparent;
+    border: none;
+    color: #94A3B8;
+    cursor: pointer;
+    font-size: 14px;
+    padding: 6px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: var(--transition);
+    border-radius: var(--radius-sm);
+    z-index: 2;
+}
+
+.btn-toggle-password:hover {
+    color: var(--primary);
+}
+
+.auth-error-alert {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    background: #FEF2F2;
+    border: 1px solid #FECACA;
+    color: #DC2626;
+    padding: 10px 14px;
+    border-radius: var(--radius-md);
+    font-size: 12.5px;
+    font-weight: 600;
+    line-height: 1.4;
+    animation: fadeInDown 0.3s ease;
+}
+
+.auth-error-alert i {
+    font-size: 15px;
+    flex-shrink: 0;
+}
+
+@keyframes shake {
+    0%, 100% { transform: translateX(0); }
+    15%, 45%, 75% { transform: translateX(-6px); }
+    30%, 60%, 90% { transform: translateX(6px); }
+}
+
+.shake-box {
+    animation: shake 0.4s ease-in-out;
+}
+
+.input-error {
+    border-color: #EF4444 !important;
+    box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.2) !important;
+}
+
 .auth-hint {
     margin-top: 20px;
     padding-top: 14px;
@@ -1893,29 +1953,46 @@ body {
     position: fixed;
     top: 20px;
     right: 20px;
-    z-index: 99999;
+    z-index: 999999;
     display: flex;
     flex-direction: column;
     gap: 8px;
+    max-width: calc(100vw - 32px);
+    pointer-events: none;
 }
 
 .toast {
     background: #FFFFFF;
     border-radius: var(--radius-md);
-    padding: 10px 16px;
-    box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+    padding: 12px 18px;
+    box-shadow: 0 10px 25px rgba(0,0,0,0.18);
     display: flex;
     align-items: center;
     gap: 10px;
-    font-size: 12.5px;
+    font-size: 13px;
     font-weight: 600;
     border-left: 4px solid #3B82F6;
     animation: slideInRight 0.25s ease;
-    min-width: 250px;
+    min-width: 260px;
+    pointer-events: auto;
 }
 
 .toast.success { border-left-color: #10B981; }
 .toast.error { border-left-color: #EF4444; }
+
+@media (max-width: 600px) {
+    .toast-container {
+        top: 16px;
+        left: 16px;
+        right: 16px;
+        align-items: center;
+    }
+    .toast {
+        min-width: unset;
+        width: 100%;
+        box-sizing: border-box;
+    }
+}
 
 @keyframes slideInRight {
     from { transform: translateX(100%); opacity: 0; }
