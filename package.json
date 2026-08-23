@@ -1,0 +1,28 @@
+{
+  "name": "vinmec-ocp2-reporting",
+  "version": "2.0.0",
+  "description": "Hệ thống báo cáo giao ban hoạt động ngày - Bệnh viện ĐKQT Vinmec Ocean Park 2",
+  "main": "server.js",
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node --watch server.js"
+  },
+  "keywords": [
+    "vinmec",
+    "reporting",
+    "dashboard",
+    "sqlite",
+    "nodejs"
+  ],
+  "author": "Antigravity",
+  "license": "ISC",
+  "dependencies": {
+    "bcryptjs": "^2.4.3",
+    "cookie-parser": "^1.4.7",
+    "cors": "^2.8.5",
+    "exceljs": "^4.4.0",
+    "express": "^4.21.2",
+    "jsonwebtoken": "^9.0.2",
+    "sqlite3": "^5.1.7"
+  }
+}

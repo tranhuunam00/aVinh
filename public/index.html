@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Vinmec Ocean Park 2 - Hệ Thống Báo Cáo Giao Ban Hoạt Động Ngày</title>
+    <!-- Google Fonts: Be Vietnam Pro (Gold standard for Vietnamese UI) + Inter -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Be+Vietnam+Pro:ital,wght@0,300;0,400;0,500;0,600;0,700;0,800;1,400&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <!-- Font Awesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <!-- ========================================================================= -->
+    <!-- LOGIN SCREEN (If not authenticated) -->
+    <!-- ========================================================================= -->
+    <div id="loginScreen" class="auth-screen">
+        <div class="auth-box">
+            <div class="auth-header">
+                <div class="auth-logo">
+                    <i class="fa-solid fa-hospital"></i>
+                </div>
+                <span class="auth-sub">BỆNH VIỆN ĐA KHOA QUỐC TẾ</span>
+                <h2 class="auth-title">VINMEC OCEAN PARK 2</h2>
+                <div class="auth-badge">
+                    <i class="fa-solid fa-shield-halved"></i> CỔNG BÁO CÁO GIAO BAN NGÀY
+                </div>
+            </div>
+
+            <form id="loginForm" class="auth-form">
+                <div class="form-group">
+                    <label for="loginUsername"><i class="fa-solid fa-user-circle"></i> Tên đăng nhập</label>
+                    <div class="input-with-icon">
+                        <i class="fa-solid fa-user input-icon"></i>
+                        <input type="text" id="loginUsername" class="form-control form-control-lg pl-icon" placeholder="Nhập tên đăng nhập..." required autocomplete="username">
+                    </div>
+                </div>
+
+                <div class="form-group">
+                    <label for="loginPassword"><i class="fa-solid fa-lock"></i> Mật khẩu</label>
+                    <div class="input-with-icon">
+                        <i class="fa-solid fa-key input-icon"></i>
+                        <input type="password" id="loginPassword" class="form-control form-control-lg pl-icon" placeholder="Nhập mật khẩu..." required autocomplete="current-password">
+                    </div>
+                </div>
+
+                <button type="submit" class="btn btn-primary btn-block btn-lg btn-glow" id="btnLoginSubmit">
+                    <i class="fa-solid fa-right-to-bracket"></i> ĐĂNG NHẬP HỆ THỐNG
+                </button>
+            </form>
+
+            <div class="auth-hint">
+                <div class="hint-title"><i class="fa-solid fa-circle-info"></i> <b>Chính sách bảo mật:</b></div>
+                <p>Hệ thống không cho phép tự đăng ký. Tài khoản do <b>Quản Trị Viên (Admin)</b> cấp phát theo từng khoa phòng.</p>
+                <div class="demo-credentials">
+                    <div>👑 <b>Admin:</b> <code>admin</code> / <code>Vinmec@2026</code></div>
+                    <div>🏥 <b>Khoa mẫu:</b> <code>khoa_capcuu</code> / <code>123456</code></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- MAIN APPLICATION (When authenticated) -->
+    <!-- ========================================================================= -->
+    <div id="mainApp" class="app-layout" style="display: none;">
+        <!-- Top App Header -->
+        <header class="app-header">
+            <div class="header-container">
+                <div class="brand-box">
+                    <div class="brand-icon">
+                        <i class="fa-solid fa-hospital"></i>
+                    </div>
+                    <div class="brand-text">
+                        <span class="hospital-sub">BỆNH VIỆN ĐA KHOA QUỐC TẾ</span>
+                        <h1 class="hospital-name">VINMEC OCEAN PARK 2</h1>
+                        <span class="portal-badge"><i class="fa-solid fa-chart-simple"></i> HỆ THỐNG BÁO CÁO GIAO BAN NGÀY</span>
+                    </div>
+                </div>
+
+                <div class="header-actions">
+                    <div class="live-clock" id="liveClock">
+                        <i class="fa-regular fa-clock"></i> <span id="clockText">--:--:--</span>
+                    </div>
+
+                    <button class="btn-fullscreen" id="btnFullscreen" title="Toàn màn hình phòng giao ban">
+                        <i class="fa-solid fa-expand"></i> Chế độ Giao Ban
+                    </button>
+
+                    <!-- User Profile Dropdown -->
+                    <div class="user-profile-menu">
+                        <div class="user-badge" id="userBadgeBtn">
+                            <div class="user-avatar">
+                                <i class="fa-solid fa-user-doctor"></i>
+                            </div>
+                            <div class="user-info-text">
+                                <span class="user-fullname" id="navUserFullName">Đang tải...</span>
+                                <span class="user-role-tag" id="navUserRole">Admin</span>
+                            </div>
+                            <i class="fa-solid fa-chevron-down caret-icon"></i>
+                        </div>
+
+                        <div class="dropdown-menu" id="userDropdown">
+                            <div class="dropdown-header">
+                                <b id="dropUsername">admin</b>
+                                <span id="dropDept">Toàn viện</span>
+                            </div>
+                            <button class="dropdown-item" id="btnOpenChangePass">
+                                <i class="fa-solid fa-key"></i> Đổi mật khẩu cá nhân
+                            </button>
+                            <div class="dropdown-divider"></div>
+                            <button class="dropdown-item text-danger" id="btnLogout">
+                                <i class="fa-solid fa-arrow-right-from-bracket"></i> Đăng xuất
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Navigation Tabs -->
+            <nav class="nav-tabs-wrapper">
+                <div class="nav-tabs">
+                    <button class="tab-btn active" data-tab="form-tab">
+                        <i class="fa-solid fa-pen-to-square"></i> <span>Form Nhập Liệu</span>
+                    </button>
+                    <button class="tab-btn" data-tab="dashboard-tab">
+                        <i class="fa-solid fa-chart-pie"></i> <span>Dashboard Giao Ban</span>
+                    </button>
+                    <button class="tab-btn" data-tab="data-tab">
+                        <i class="fa-solid fa-table"></i> <span>Dữ Liệu & Xuất Excel</span>
+                    </button>
+                    <!-- Admin Only Tab -->
+                    <button class="tab-btn admin-only-tab" data-tab="users-tab" id="tabUsersBtn" style="display: none;">
+                        <i class="fa-solid fa-users-gear"></i> <span>Quản Lý Tài Khoản (Admin)</span>
+                    </button>
+                    <button class="tab-btn" data-tab="guide-tab" id="tabGuideBtn">
+                        <i class="fa-solid fa-circle-question"></i> <span>Công Thức Báo Cáo</span>
+                    </button>
+                </div>
+            </nav>
+        </header>
+
+        <!-- Main Content Pane -->
+        <main class="main-content">
+            <!-- Toast Notification Container -->
+            <div id="toastContainer" class="toast-container"></div>
+
+            <!-- ============================================ -->
+            <!-- TAB 1: FORM NHẬP LIỆU KHOA / PHÒNG -->
+            <!-- ============================================ -->
+            <section id="form-tab" class="tab-pane active">
+                <div class="form-layout">
+                    <div class="form-card">
+                        <div class="card-header">
+                            <div class="title-with-badge">
+                                <h2><i class="fa-solid fa-calendar-check"></i> BÁO CÁO SỐ LIỆU HOẠT ĐỘNG NGÀY</h2>
+                                <span class="department-status-tag" id="currentDeptStatus">Chưa nhập</span>
+                            </div>
+                            <p class="subtitle">Nhập số liệu hoạt động trong 24h qua của khoa để chuẩn bị cho buổi giao ban sáng.</p>
+                        </div>
+
+                        <form id="dailyReportForm" class="entry-form">
+                            <!-- Top Selector Bar -->
+                            <div class="selector-row">
+                                <div class="form-group">
+                                    <label for="inputDate"><i class="fa-regular fa-calendar-days"></i> 1. Ngày Báo Cáo <span class="required">*</span></label>
+                                    <input type="date" id="inputDate" class="form-control form-control-lg date-input" required>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="selectFacility"><i class="fa-solid fa-building-circle-check"></i> 2. Cơ Sở <span class="required">*</span></label>
+                                    <select id="selectFacility" class="form-control form-control-lg" required>
+                                        <option value="Bệnh viện">Bệnh viện Vinmec</option>
+                                        <option value="PK OCP1">Phòng khám OCP1</option>
+                                        <option value="PK OCP2">Phòng khám OCP2</option>
+                                    </select>
+                                </div>
+
+                                <div class="form-group">
+                                    <label for="selectDepartment"><i class="fa-solid fa-stethoscope"></i> 3. Chuyên Khoa / Phòng <span class="required">*</span></label>
+                                    <select id="selectDepartment" class="form-control form-control-lg highlight-select" required>
+                                        <!-- Dynamic Options -->
+                                    </select>
+                                    <small class="dept-lock-hint" id="deptLockNotice" style="display: none;">
+                                        <i class="fa-solid fa-lock"></i> Tài khoản của bạn được khóa cố định theo chuyên khoa này.
+                                    </small>
+                                </div>
+                            </div>
+
+                            <!-- Rule / Notice Box -->
+                            <div class="dept-rule-alert" id="deptRuleAlert">
+                                <div class="rule-icon"><i class="fa-solid fa-wand-magic-sparkles"></i></div>
+                                <div class="rule-content">
+                                    <span id="deptRuleText">Đang tải cấu hình trường nhập liệu...</span>
+                                </div>
+                            </div>
+
+                            <!-- DYNAMIC FIELDS CONTAINER -->
+                            <div id="dynamicFieldsContainer" class="dynamic-sections-grid">
+                                <!-- Rendered dynamically by app.js -->
+                            </div>
+
+                            <!-- Form Actions Bar -->
+                            <div class="form-actions-bar">
+                                <div class="action-left">
+                                    <button type="button" class="btn btn-warning" id="btnResetForm">
+                                        <i class="fa-solid fa-rotate-left"></i> Đặt lại về 0 (Reset)
+                                    </button>
+                                </div>
+                                <div class="action-right">
+                                    <button type="submit" class="btn btn-primary btn-save btn-glow" id="btnSaveReport">
+                                        <i class="fa-solid fa-floppy-disk"></i> LƯU BÁO CÁO (SAVE)
+                                    </button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Right Side Checklist & Progress -->
+                    <div class="side-info-card">
+                        <div class="side-card-header">
+                            <h3><i class="fa-solid fa-list-check"></i> Tiến Độ Báo Cáo Ngày</h3>
+                            <span class="badge badge-accent" id="sideProgressBadge">0/17 Khoa</span>
+                        </div>
+                        <div class="progress-bar-container">
+                            <div class="progress-bar" id="sideProgressBar" style="width: 0%;"></div>
+                        </div>
+                        <p class="progress-note">Trạng thái các khoa nộp số liệu cho ngày đang chọn:</p>
+
+                        <div class="dept-checklist" id="deptChecklist">
+                            <!-- Populated by JS -->
+                        </div>
+
+                        <div class="quick-export-box">
+                            <button class="btn btn-outline btn-block" id="btnQuickExport">
+                                <i class="fa-solid fa-file-excel text-success"></i> Xuất Excel Giao Ban (.xlsx)
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================ -->
+            <!-- TAB 2: DASHBOARD GIAO BAN BUỔI SÁNG -->
+            <!-- ============================================ -->
+            <section id="dashboard-tab" class="tab-pane">
+                <div class="dashboard-controls">
+                    <div class="dash-title-group">
+                        <h2><i class="fa-solid fa-chart-line"></i> DASHBOARD TỔNG QUAN GIAO BAN BUỔI SÁNG</h2>
+                        <span class="text-muted" id="dashSubTitle">Số liệu tổng hợp theo thời gian thực</span>
+                    </div>
+                    <div class="dash-filters">
+                        <div class="filter-item">
+                            <label for="dashDateFilter"><i class="fa-regular fa-calendar"></i> Ngày giao ban:</label>
+                            <input type="date" id="dashDateFilter" class="form-control">
+                        </div>
+                        <div class="filter-item">
+                            <label for="dashFacilityFilter"><i class="fa-solid fa-hospital"></i> Cơ sở:</label>
+                            <select id="dashFacilityFilter" class="form-control">
+                                <option value="ALL">Tất cả cơ sở</option>
+                                <option value="Bệnh viện">Bệnh viện Vinmec</option>
+                                <option value="PK OCP1">PK OCP1</option>
+                                <option value="PK OCP2">PK OCP2</option>
+                            </select>
+                        </div>
+                        <button class="btn btn-primary btn-refresh" id="btnRefreshDashboard">
+                            <i class="fa-solid fa-arrows-rotate"></i> Cập Nhật
+                        </button>
+                    </div>
+                </div>
+
+                <!-- KPI Metric Cards Grid -->
+                <div class="kpi-grid">
+                    <div class="kpi-card kpi-blue">
+                        <div class="kpi-icon"><i class="fa-solid fa-user-doctor"></i></div>
+                        <div class="kpi-data">
+                            <span class="kpi-label">Tổng Lượt Khám</span>
+                            <h3 class="kpi-value" id="kpiTotalKham">0</h3>
+                            <span class="kpi-sub">Khám chuyên khoa, tổng quát & CC</span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card kpi-red">
+                        <div class="kpi-icon"><i class="fa-solid fa-truck-medical"></i></div>
+                        <div class="kpi-data">
+                            <span class="kpi-label">Khám Cấp Cứu</span>
+                            <h3 class="kpi-value" id="kpiTotalCapCuu">0</h3>
+                            <span class="kpi-sub">Ca cấp cứu tiếp nhận 24h</span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card kpi-teal">
+                        <div class="kpi-icon"><i class="fa-solid fa-bed-pulse"></i></div>
+                        <div class="kpi-data">
+                            <span class="kpi-label">Bệnh Nhân Vào Viện</span>
+                            <h3 class="kpi-value" id="kpiTotalVaoVien">0</h3>
+                            <span class="kpi-sub">Nội trú: <b id="kpiNoiTruSub">0</b> | Daycare: <b id="kpiDaycareSub">0</b></span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card kpi-gold">
+                        <div class="kpi-icon"><i class="fa-solid fa-hand-holding-medical"></i></div>
+                        <div class="kpi-data">
+                            <span class="kpi-label">Phẫu Thuật & Thủ Thuật</span>
+                            <h3 class="kpi-value" id="kpiTotalPhauThuat">0</h3>
+                            <span class="kpi-sub">Mổ: <b id="kpiMoSub">0</b> | Thủ thuật: <b id="kpiThuThuatSub">0</b></span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card kpi-purple">
+                        <div class="kpi-icon"><i class="fa-solid fa-microscope"></i></div>
+                        <div class="kpi-data">
+                            <span class="kpi-label">Khối Cận Lâm Sàng</span>
+                            <h3 class="kpi-value" id="kpiTotalCLS">0</h3>
+                            <span class="kpi-sub">XN: <b id="kpiXNSub">0</b> | CĐHA: <b id="kpiCDHASub">0</b> | ĐQCT: <b id="kpiDQCTSub">0</b></span>
+                        </div>
+                    </div>
+
+                    <div class="kpi-card kpi-dark">
+                        <div class="kpi-icon"><i class="fa-solid fa-person-walking-arrow-right"></i></div>
+                        <div class="kpi-data">
+                            <span class="kpi-label">Ra Viện / Chuyển Tuyến</span>
+                            <h3 class="kpi-value" id="kpiTotalRaVien">0</h3>
+                            <span class="kpi-sub">Chuyển viện: <b id="kpiChuyenVienSub">0</b> | Nặng xin về: <b id="kpiNangXinVeSub">0</b> | Tử vong: <b id="kpiTuVongSub">0</b></span>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Charts Grid -->
+                <div class="charts-grid">
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h4><i class="fa-solid fa-chart-column"></i> Số Lượng Khám Theo Chuyên Khoa</h4>
+                            <span class="chart-tag">Lượt khám</span>
+                        </div>
+                        <div class="chart-body">
+                            <canvas id="chartDeptKham"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h4><i class="fa-solid fa-chart-pie"></i> Cơ Cấu Dịch Vụ</h4>
+                            <span class="chart-tag">Tỷ trọng</span>
+                        </div>
+                        <div class="chart-body chart-body-donut">
+                            <canvas id="chartServices"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h4><i class="fa-solid fa-x-ray"></i> Chẩn Đoán Hình Ảnh</h4>
+                            <span class="chart-tag">Kỹ thuật</span>
+                        </div>
+                        <div class="chart-body">
+                            <canvas id="chartCDHA"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-card">
+                        <div class="chart-header">
+                            <h4><i class="fa-solid fa-vial-virus"></i> Xét Nghiệm</h4>
+                            <span class="chart-tag">Mẫu thực hiện</span>
+                        </div>
+                        <div class="chart-body">
+                            <canvas id="chartXetNghiem"></canvas>
+                        </div>
+                    </div>
+
+                    <div class="chart-card chart-wide">
+                        <div class="chart-header">
+                            <h4><i class="fa-solid fa-heart-pulse"></i> Tình Trạng Ra Vào Viện & Chuyển Tuyến</h4>
+                            <span class="chart-tag">Ca bệnh</span>
+                        </div>
+                        <div class="chart-body">
+                            <canvas id="chartStatus"></canvas>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================ -->
+            <!-- TAB 3: DANH SÁCH DỮ LIỆU & XUẤT EXCEL -->
+            <!-- ============================================ -->
+            <section id="data-tab" class="tab-pane">
+                <div class="data-mgmt-card">
+                    <div class="card-header flex-between">
+                        <div>
+                            <h2><i class="fa-solid fa-table-list"></i> TỔNG HỢP DỮ LIỆU ĐÃ NHẬP (SHEET OUTPUT)</h2>
+                            <p class="subtitle">Bảng tổng hợp tất cả bản ghi báo cáo của các khoa phục vụ theo dõi và trích xuất.</p>
+                        </div>
+                        <div class="btn-group">
+                            <button class="btn btn-primary btn-glow" id="btnExportExcelMain">
+                                <i class="fa-solid fa-file-excel"></i> Tải File Excel Chuẩn (.xlsx)
+                            </button>
+                            <button class="btn btn-secondary" id="btnReloadTable">
+                                <i class="fa-solid fa-arrows-rotate"></i> Làm Mới Bảng
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Table Filters -->
+                    <div class="table-filters-row">
+                        <div class="filter-control">
+                            <label for="tableDateFilter"><i class="fa-regular fa-calendar"></i> Ngày:</label>
+                            <input type="date" id="tableDateFilter" class="form-control">
+                        </div>
+                        <div class="filter-control">
+                            <label for="tableFacilityFilter"><i class="fa-solid fa-hospital"></i> Cơ sở:</label>
+                            <select id="tableFacilityFilter" class="form-control">
+                                <option value="">Tất cả cơ sở</option>
+                                <option value="Bệnh viện">Bệnh viện</option>
+                                <option value="PK OCP1">PK OCP1</option>
+                                <option value="PK OCP2">PK OCP2</option>
+                            </select>
+                        </div>
+                        <div class="filter-control flex-grow">
+                            <label for="tableSearchFilter"><i class="fa-solid fa-magnifying-glass"></i> Tìm khoa:</label>
+                            <input type="text" id="tableSearchFilter" class="form-control" placeholder="Nhập tên chuyên khoa...">
+                        </div>
+                    </div>
+
+                    <!-- Data Table -->
+                    <div class="table-responsive">
+                        <table class="custom-table" id="reportsTable">
+                            <thead>
+                                <tr>
+                                    <th>Ngày</th>
+                                    <th>Cơ sở</th>
+                                    <th>Chuyên khoa</th>
+                                    <th>Khám bệnh</th>
+                                    <th>Điều trị</th>
+                                    <th>Dịch vụ</th>
+                                    <th>Tình trạng</th>
+                                    <th>Chi tiết CLS (XN/CĐHA/ĐQCT)</th>
+                                    <th>Người nộp</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="reportsTableBody">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Master Data Reference Accordion (Sheet Data) -->
+                    <div class="master-data-reference" style="margin-top: 30px; padding-top: 20px; border-top: 1px solid #E2E8F0;">
+                        <div class="card-header flex-between" style="border:none; padding:0; margin-bottom: 12px;">
+                            <h3 style="font-size: 15px; font-weight: 800; color: #0A2540;"><i class="fa-solid fa-layer-group"></i> DANH MỤC CHUẨN ĐẦU VÀO (SHEET DATA)</h3>
+                            <span class="badge badge-accent">Cấu hình hệ thống</span>
+                        </div>
+                        <p style="font-size: 12.5px; color: #64748B; margin-bottom: 14px;">Danh mục 3 cơ sở, 17 chuyên khoa và các nhóm chỉ số hoạt động:</p>
+                        <div class="master-data-chips-grid" id="masterDataChipsGrid">
+                            <!-- Populated dynamically by app.js -->
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================ -->
+            <!-- TAB 4: QUẢN LÝ TÀI KHOẢN (CHỈ ADMIN MỚI THẤY) -->
+            <!-- ============================================ -->
+            <section id="users-tab" class="tab-pane">
+                <div class="data-mgmt-card">
+                    <div class="card-header flex-between">
+                        <div>
+                            <h2><i class="fa-solid fa-user-shield"></i> QUẢN TRỊ TÀI KHOẢN CÁC KHOA / PHÒNG</h2>
+                            <p class="subtitle">Chỉ có duy nhất Super Admin mới có quyền tạo, cấp phát và quản lý tài khoản khoa phòng.</p>
+                        </div>
+                        <button class="btn btn-primary btn-glow" id="btnOpenCreateUserModal">
+                            <i class="fa-solid fa-user-plus"></i> Tạo Tài Khoản Khoa Mới
+                        </button>
+                    </div>
+
+                    <div class="table-responsive" style="margin-top: 20px;">
+                        <table class="custom-table" id="usersTable">
+                            <thead>
+                                <tr>
+                                    <th>Tên đăng nhập</th>
+                                    <th>Tên khoa / Người phụ trách</th>
+                                    <th>Vai trò</th>
+                                    <th>Cơ sở</th>
+                                    <th>Chuyên khoa gán</th>
+                                    <th>Trạng thái</th>
+                                    <th>Ngày tạo</th>
+                                    <th>Thao tác</th>
+                                </tr>
+                            </thead>
+                            <tbody id="usersTableBody">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <!-- ============================================ -->
+            <!-- TAB 5: TÀI LIỆU ĐẶC TẢ CÔNG THỨC & LOGIC (CHỈ ADMIN) -->
+            <!-- ============================================ -->
+            <section id="guide-tab" class="tab-pane">
+                <div class="data-mgmt-card" style="padding: 24px 28px;">
+                    <div class="card-header flex-between" style="border-bottom: 2px solid #0A2540; padding-bottom: 14px; margin-bottom: 20px;">
+                        <div>
+                            <h2 style="font-size: 18px; font-weight: 800; color: #0A2540; letter-spacing: 0.3px;">
+                                ĐẶC TẢ CÔNG THỨC TÍNH TOÁN & QUY TẮC BÁO CÁO GIAO BAN
+                            </h2>
+                            <p class="subtitle" style="margin-top: 4px; font-size: 13px;">
+                                Tài liệu chuẩn kỹ thuật quy định công thức tổng hợp KPI, ma trận phân bổ chuyên khoa và cơ chế đồng bộ dữ liệu.
+                            </p>
+                        </div>
+                        <span class="badge badge-admin" style="font-size: 11px; padding: 4px 10px;">Chỉ Quản Trị Viên (Admin)</span>
+                    </div>
+
+                    <!-- MỤC 1: 6 CHỈ SỐ KPI -->
+                    <div style="margin-bottom: 28px;">
+                        <h3 style="font-size: 14.5px; font-weight: 800; color: #0A2540; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; border-left: 3px solid #007A87; padding-left: 8px;">
+                            I. Quy Chuẩn Tính Toán 6 Thẻ Chỉ Số KPI Điều Hành
+                        </h3>
+                        <div class="table-responsive">
+                            <table class="custom-table" style="font-size: 12.5px;">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 80px;">Mã KPI</th>
+                                        <th style="width: 170px;">Tên Chỉ Số</th>
+                                        <th>Công Thức Toán Học & Nguồn Dữ Liệu</th>
+                                        <th style="width: 90px; text-align: center;">Đơn Vị</th>
+                                        <th style="width: 150px;">Phạm Vi Áp Dụng</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><b>KPI-01</b></td>
+                                        <td><b>Tổng Lượt Khám</b></td>
+                                        <td>
+                                            <code>∑ (Khám cấp cứu + Khám chuyên khoa + Khám tổng quát + Khám cộng đồng)</code><br>
+                                            <span style="color: #64748B; font-size: 11.5px;">Tổng hợp tất cả các lượt người bệnh đến khám tại các chuyên khoa lâm sàng trong 24h.</span>
+                                        </td>
+                                        <td style="text-align: center;">Lượt</td>
+                                        <td>Tất cả các khoa Lâm sàng</td>
+                                    </tr>
+                                    <tr>
+                                        <td><b>KPI-02</b></td>
+                                        <td><b>Khám Cấp Cứu</b></td>
+                                        <td>
+                                            <code>∑ ("Khám cấp cứu")</code><br>
+                                            <span style="color: #64748B; font-size: 11.5px;">Số ca tiếp nhận cấp cứu tại Khoa Cấp cứu và các buồng khám cấp cứu ngoại viện.</span>
+                                        </td>
+                                        <td style="text-align: center;">Ca</td>
+                                        <td>Khoa Cấp cứu / Khám bệnh</td>
+                                    </tr>
+                                    <tr>
+                                        <td><b>KPI-03</b></td>
+                                        <td><b>Bệnh Nhân Vào Viện</b></td>
+                                        <td>
+                                            <code>Vào viện = ∑ (Chỉ số "Vào viện" từ nhóm Tình Trạng)</code><br>
+                                            <code>Nội trú  = ∑ (Chỉ số "Nội trú" từ nhóm Điều Trị)</code><br>
+                                            <code>Daycare  = ∑ (Chỉ số "Daycare" từ nhóm Điều Trị)</code>
+                                        </td>
+                                        <td style="text-align: center;">Người bệnh</td>
+                                        <td>Khối điều trị Lâm sàng</td>
+                                    </tr>
+                                    <tr>
+                                        <td><b>KPI-04</b></td>
+                                        <td><b>Phẫu Thuật & Thủ Thuật</b></td>
+                                        <td>
+                                            <code>Tổng = ∑ (Phẫu thuật / Ca mổ) + ∑ (Thủ thuật)</code><br>
+                                            <span style="color: #64748B; font-size: 11.5px;">Bóc tách riêng: Ca mổ phiên/mổ cấp cứu và các thủ thuật can thiệp theo danh mục.</span>
+                                        </td>
+                                        <td style="text-align: center;">Ca / Lượt</td>
+                                        <td>Khối Ngoại, Sản, Mắt, RHM, TMH...</td>
+                                    </tr>
+                                    <tr>
+                                        <td><b>KPI-05</b></td>
+                                        <td><b>Khối Cận Lâm Sàng</b></td>
+                                        <td>
+                                            <code>Tổng CLS = ∑ (7 nhóm Xét Nghiệm) + ∑ (10 kỹ thuật CĐHA) + ∑ (3 kỹ thuật ĐQCT)</code><br>
+                                            <span style="color: #64748B; font-size: 11.5px;">Bao gồm: Mẫu XN (Sinh hóa, Huyết học, Vi sinh...) + Lượt chụp (Siêu âm, XQ, CT, MRI, Mammo...) + Ca can thiệp mạch/tạng.</span>
+                                        </td>
+                                        <td style="text-align: center;">Mẫu / Ca</td>
+                                        <td>Khối Cận Lâm Sàng (XN, CĐHA, ĐQCT)</td>
+                                    </tr>
+                                    <tr>
+                                        <td><b>KPI-06</b></td>
+                                        <td><b>Ra Viện / Chuyển Tuyến</b></td>
+                                        <td>
+                                            <code>Ra viện     = ∑ (Ra viện theo CĐ + Ra viện không theo CĐ + Nặng xin về)</code><br>
+                                            <code>Chuyển viện = ∑ (Chuyển viện)</code> | <code>Tử vong = ∑ (Tử vong)</code>
+                                        </td>
+                                        <td style="text-align: center;">Ca</td>
+                                        <td>Toàn viện</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- MỤC 2: CÔNG THỨC TOÁN HỌC CÁC BIỂU ĐỒ (CHARTS) -->
+                    <div style="margin-bottom: 28px;">
+                        <h3 style="font-size: 14.5px; font-weight: 800; color: #0A2540; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; border-left: 3px solid #007A87; padding-left: 8px;">
+                            II. Quy Chuẩn & Công Thức Toán Học Cho Các Biểu Đồ Dashboard
+                        </h3>
+                        
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 14px;">
+                            <!-- Biểu đồ 1: Số Lượng Khám Theo Khoa -->
+                            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px 16px;">
+                                <h4 style="font-size: 13px; font-weight: 700; color: #0A2540; margin-bottom: 6px;">
+                                    1. Biểu Đồ Cột: Số Lượng Khám Theo Chuyên Khoa
+                                </h4>
+                                <p style="font-size: 12px; color: #475569; margin-bottom: 8px;">
+                                    Giá trị cột trục Y của mỗi chuyên khoa $K$ được tính bằng tổng các hình thức khám của khoa đó:
+                                </p>
+                                <div style="background: #FFFFFF; border: 1px solid #CBD5E1; padding: 8px 10px; border-radius: 4px; font-size: 11.5px; margin-bottom: 10px;">
+                                    <code>Lượt khám (Khoa K) = ∑ (Khám CC + Chuyên khoa + Tổng quát + Cộng đồng)</code>
+                                </div>
+                                <table class="custom-table" style="font-size: 11.5px;">
+                                    <thead>
+                                        <tr>
+                                            <th>Chuyên Khoa</th>
+                                            <th style="text-align: right;">Số Lượt Khám (Trục Y)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td>Cấp cứu</td><td style="text-align: right;"><b>32</b></td></tr>
+                                        <tr><td>Ngoại tổng hợp</td><td style="text-align: right;"><b>51</b></td></tr>
+                                        <tr><td>Phụ sản</td><td style="text-align: right;"><b>42</b></td></tr>
+                                        <tr><td>Phục hồi chức năng</td><td style="text-align: right;"><b>4</b></td></tr>
+                                        <tr style="background: #F1F5F9;"><td><b>Tổng Cộng Toàn Viện</b></td><td style="text-align: right; color:#007A87;"><b>129</b></td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Biểu đồ 2: Cơ Cấu Dịch Vụ -->
+                            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px 16px;">
+                                <h4 style="font-size: 13px; font-weight: 700; color: #0A2540; margin-bottom: 6px;">
+                                    2. Biểu Đồ Tròn (Donut): Cơ Cấu Dịch Vụ
+                                </h4>
+                                <p style="font-size: 12px; color: #475569; margin-bottom: 8px;">
+                                    Tỷ trọng phần trăm (%) của từng lát cắt dịch vụ $S$ trên tổng các lượt dịch vụ:
+                                </p>
+                                <div style="background: #FFFFFF; border: 1px solid #CBD5E1; padding: 8px 10px; border-radius: 4px; font-size: 11.5px; margin-bottom: 10px;">
+                                    <code>Tỷ trọng (%) = (Tổng số ca dịch vụ S / Tổng tất cả các lượt DV) × 100%</code>
+                                </div>
+                                <table class="custom-table" style="font-size: 11.5px;">
+                                    <thead>
+                                        <tr>
+                                            <th>Loại Dịch Vụ</th>
+                                            <th style="text-align: right;">Số Ca / Lượt</th>
+                                            <th style="text-align: right;">Tỷ Trọng (%)</th>
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td>Khám bệnh</td><td style="text-align: right;">126</td><td style="text-align: right;"><b>54.08%</b></td></tr>
+                                        <tr><td>Chăm sóc toàn diện</td><td style="text-align: right;">41</td><td style="text-align: right;"><b>17.60%</b></td></tr>
+                                        <tr><td>Thủ thuật</td><td style="text-align: right;">32</td><td style="text-align: right;"><b>13.73%</b></td></tr>
+                                        <tr><td>Phẫu thuật (Mổ)</td><td style="text-align: right;">14</td><td style="text-align: right;"><b>6.01%</b></td></tr>
+                                        <tr><td>Chăm sóc sau sinh</td><td style="text-align: right;">14</td><td style="text-align: right;"><b>6.01%</b></td></tr>
+                                        <tr><td>Hỗ trợ sinh đẻ</td><td style="text-align: right;">6</td><td style="text-align: right;"><b>2.58%</b></td></tr>
+                                        <tr style="background: #F1F5F9;"><td><b>Tổng Các Lượt DV</b></td><td style="text-align: right;"><b>233</b></td><td style="text-align: right; color:#007A87;"><b>100.0%</b></td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- 3 Biểu đồ còn lại: CĐHA, Xét Nghiệm, Tình trạng ra vào viện -->
+                        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 14px;">
+                            <!-- Biểu đồ 3: Chẩn Đoán Hình Ảnh -->
+                            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px 16px;">
+                                <h4 style="font-size: 13px; font-weight: 700; color: #0A2540; margin-bottom: 6px;">
+                                    3. Biểu Đồ Cột: Chẩn Đoán Hình Ảnh (10 Kỹ Thuật)
+                                </h4>
+                                <p style="font-size: 12px; color: #475569; margin-bottom: 8px;">
+                                    Số lượt thực hiện trong 24h của từng kỹ thuật chẩn đoán hình ảnh:
+                                </p>
+                                <div style="background: #FFFFFF; border: 1px solid #CBD5E1; padding: 8px 10px; border-radius: 4px; font-size: 11.5px; margin-bottom: 10px;">
+                                    <code>Tổng CĐHA = ∑ (10 kỹ thuật chụp chiếu / siêu âm) = 243 lượt</code>
+                                </div>
+                                <table class="custom-table" style="font-size: 11px;">
+                                    <thead>
+                                        <tr><th>Kỹ Thuật CĐHA</th><th style="text-align: right;">Lượt Thực Hiện</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td>Siêu âm</td><td style="text-align: right;"><b>92</b></td></tr>
+                                        <tr><td>XQ Tổng quát</td><td style="text-align: right;"><b>70</b></td></tr>
+                                        <tr><td>MSCT (Chụp cắt lớp)</td><td style="text-align: right;"><b>20</b></td></tr>
+                                        <tr><td>MRI (Cộng hưởng từ)</td><td style="text-align: right;"><b>18</b></td></tr>
+                                        <tr><td>Siêu âm ABUS</td><td style="text-align: right;"><b>14</b></td></tr>
+                                        <tr><td>XQ Panorama / Mammo</td><td style="text-align: right;"><b>18</b> (10 + 8)</td></tr>
+                                        <tr><td>DEXA / CBCT / Teleradiology</td><td style="text-align: right;"><b>11</b> (6 + 5 + 0)</td></tr>
+                                        <tr style="background: #F1F5F9;"><td><b>Tổng Cộng CĐHA</b></td><td style="text-align: right; color:#007A87;"><b>243</b></td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+
+                            <!-- Biểu đồ 4: Xét Nghiệm -->
+                            <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px 16px;">
+                                <h4 style="font-size: 13px; font-weight: 700; color: #0A2540; margin-bottom: 6px;">
+                                    4. Biểu Đồ Cột: Xét Nghiệm (7 Nhóm Mẫu)
+                                </h4>
+                                <p style="font-size: 12px; color: #475569; margin-bottom: 8px;">
+                                    Số lượng mẫu bệnh phẩm thực hiện trong 24h bóc tách theo 7 phân nhóm:
+                                </p>
+                                <div style="background: #FFFFFF; border: 1px solid #CBD5E1; padding: 8px 10px; border-radius: 4px; font-size: 11.5px; margin-bottom: 10px;">
+                                    <code>Tổng Mẫu XN = ∑ (7 nhóm xét nghiệm chuyên biệt) = 364 mẫu</code>
+                                </div>
+                                <table class="custom-table" style="font-size: 11px;">
+                                    <thead>
+                                        <tr><th>Nhóm Xét Nghiệm</th><th style="text-align: right;">Số Mẫu Bệnh Phẩm</th></tr>
+                                    </thead>
+                                    <tbody>
+                                        <tr><td>Sinh hóa</td><td style="text-align: right;"><b>165</b></td></tr>
+                                        <tr><td>Huyết học</td><td style="text-align: right;"><b>125</b></td></tr>
+                                        <tr><td>Vi sinh</td><td style="text-align: right;"><b>42</b></td></tr>
+                                        <tr><td>Tế bào học</td><td style="text-align: right;"><b>15</b></td></tr>
+                                        <tr><td>Mô bệnh học</td><td style="text-align: right;"><b>9</b></td></tr>
+                                        <tr><td>Hóa mô miễn dịch / Di truyền</td><td style="text-align: right;"><b>8</b> (5 + 3)</td></tr>
+                                        <tr style="background: #F1F5F9;"><td><b>Tổng Cộng Mẫu XN</b></td><td style="text-align: right; color:#007A87;"><b>364</b></td></tr>
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+
+                        <!-- Biểu đồ 5: Tình Trạng Ra Vào Viện & Chuyển Tuyến -->
+                        <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 14px 16px;">
+                            <h4 style="font-size: 13px; font-weight: 700; color: #0A2540; margin-bottom: 6px;">
+                                5. Biểu Đồ Cột Toàn Chiều: Tình Trạng Ra Vào Viện & Chuyển Tuyến (6 Nhóm)
+                            </h4>
+                            <p style="font-size: 12px; color: #475569; margin-bottom: 8px;">
+                                Tổng hợp luân chuyển người bệnh toàn viện trong 24h:
+                            </p>
+                            <table class="custom-table" style="font-size: 11.5px;">
+                                <thead>
+                                    <tr>
+                                        <th>Chỉ Số Tình Trạng</th>
+                                        <th style="text-align: right;">Số Ca (Trục Y)</th>
+                                        <th>Khoa Đóng Góp</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr><td><b>Vào viện</b></td><td style="text-align: right;"><b>27</b></td><td>Cấp cứu (12), Ngoại tổng hợp (9), Phụ sản (6)</td></tr>
+                                    <tr><td><b>Ra viện theo chỉ định</b></td><td style="text-align: right;"><b>26</b></td><td>Cấp cứu (14), Ngoại tổng hợp (7), Phụ sản (5)</td></tr>
+                                    <tr><td><b>Ra viện không theo chỉ định</b></td><td style="text-align: right;"><b>1</b></td><td>Cấp cứu (1)</td></tr>
+                                    <tr><td><b>Chuyển viện</b></td><td style="text-align: right;"><b>2</b></td><td>Cấp cứu (2)</td></tr>
+                                    <tr><td><b>Nặng xin về</b></td><td style="text-align: right;"><b>0</b></td><td>Toàn viện 0 ca</td></tr>
+                                    <tr><td><b>Tử vong</b></td><td style="text-align: right;"><b>0</b></td><td>Toàn viện 0 ca</td></tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- MỤC 3: MA TRẬN RẼ NHÁNH 17 CHUYÊN KHOA -->
+                    <div style="margin-bottom: 28px;">
+                        <h3 style="font-size: 14.5px; font-weight: 800; color: #0A2540; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; border-left: 3px solid #007A87; padding-left: 8px;">
+                            III. Ma Trận Quy Tắc Rẽ Nhánh Danh Mục 17 Chuyên Khoa
+                        </h3>
+                        <div class="table-responsive">
+                            <table class="custom-table" style="font-size: 12.5px;">
+                                <thead>
+                                    <tr>
+                                        <th style="width: 220px;">Nhóm Chuyên Khoa</th>
+                                        <th style="width: 260px;">Danh Sách Khoa / Phòng</th>
+                                        <th>Quy Tắc Rẽ Nhánh Form Nhập Liệu Tự Động</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <tr>
+                                        <td><b>1. Khoa Xét Nghiệm</b></td>
+                                        <td>Khoa Xét nghiệm</td>
+                                        <td>Ẩn toàn bộ form khám/điều trị thông thường. Mở form chuyên biệt <b>7 nhóm xét nghiệm</b> (Sinh hóa, Huyết học, Vi sinh, Tế bào học, Mô bệnh học, Hóa mô miễn dịch, Di truyền).</td>
+                                    </tr>
+                                    <tr>
+                                        <td><b>2. Chẩn Đoán Hình Ảnh</b></td>
+                                        <td>Khoa Chẩn đoán hình ảnh</td>
+                                        <td>Mở form kỹ thuật riêng gồm <b>10 phương pháp</b> (Siêu âm, Siêu âm ABUS, XQ Tổng quát, XQ Panorama, XQ Mammo, MSCT, CBCT, MRI, DEXA, Teleradiology).</td>
+                                    </tr>
+                                    <tr>
+                                        <td><b>3. Điện Quang Can Thiệp</b></td>
+                                        <td>Khoa Điện quang can thiệp</td>
+                                        <td>Mở form thủ thuật can thiệp gồm <b>3 nhóm</b> (Can thiệp SA, Can thiệp CT, Can thiệp XA).</td>
+                                    </tr>
+                                    <tr>
+                                        <td><b>4. Khoa Phụ Sản</b></td>
+                                        <td>Khoa Phụ sản</td>
+                                        <td>Tự động bổ sung 3 chỉ số đặc thù chuyên khoa: <b>Chăm sóc sau sinh</b>, <b>Hỗ trợ sinh đẻ</b>, và <b>Mổ lấy thai</b>.</td>
+                                    </tr>
+                                    <tr>
+                                        <td><b>5. Khối Khám & Nội Khoa</b></td>
+                                        <td>Cấp cứu, Khám bệnh, Nội tổng hợp, Da liễu, Vaccine, Thần kinh cột sống, PHCN</td>
+                                        <td>Tự động <b>ẩn trường Phẫu thuật</b> theo ghi chú quy định form của bệnh viện.</td>
+                                    </tr>
+                                    <tr>
+                                        <td><b>6. Khối Ngoại Chuyên Khoa</b></td>
+                                        <td>Ngoại tổng hợp, Chấn thương chỉnh hình, Mắt, Tai mũi họng, Răng hàm mặt</td>
+                                        <td>Hiển thị đầy đủ Khám, Điều trị, Phẫu thuật, Thủ thuật và Tình trạng người bệnh.</td>
+                                    </tr>
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- MỤC 3: CƠ CHẾ ĐIỀU PHỐI ĐA CƠ SỞ & BẢO TOÀN DỮ LIỆU -->
+                    <div>
+                        <h3 style="font-size: 14.5px; font-weight: 800; color: #0A2540; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.5px; border-left: 3px solid #007A87; padding-left: 8px;">
+                            III. Nguyên Tắc Bảo Toàn Dữ Liệu & Điều Phối Đa Cơ Sở
+                        </h3>
+                        <div style="background: #F8FAFC; border: 1px solid #E2E8F0; border-radius: 8px; padding: 16px 20px; font-size: 12.5px; line-height: 1.7; color: #334155;">
+                            <p style="margin-bottom: 8px;">
+                                <b>1. Cơ chế Chống Cộng Trùng (Upsert Idempotency):</b> Mỗi chuyên khoa tại một cơ sở trong ngày chỉ duy trì duy nhất 1 bản ghi định danh <code>(report_date, facility, department)</code>. Khi khoa nộp lại, hệ thống tự động cập nhật đè (Update) dữ liệu mới nhất, tuyệt đối không tạo bản ghi thừa hay cộng dồn hai lần.
+                            </p>
+                            <p style="margin-bottom: 8px;">
+                                <b>2. Tổng Hợp & Phân Tách Cơ Sở:</b> Dashboard hỗ trợ chuyển đổi linh hoạt giữa các chế độ xem: Toàn viện (Tổng hợp cả Bệnh viện + PK OCP1 + PK OCP2) hoặc xem riêng từng cơ sở độc lập theo thời gian thực.
+                            </p>
+                            <p style="margin-bottom: 8px;">
+                                <b>3. Tính Toàn Vẹn Cơ Sở Dữ Liệu:</b> Cơ sở dữ liệu SQLite chạy chế độ WAL (Write-Ahead Logging) ghi trực tiếp xuống ổ đĩa cứng <code>data/vinmec.sqlite</code>, đảm bảo an toàn tuyệt đối trước mọi sự cố mất điện hoặc khởi động lại máy chủ.
+                            </p>
+                            <p>
+                                <b>4. Xuất Báo Cáo Excel Đa Sheet Chuẩn Mẫu:</b> Dữ liệu xuất ra file <code>.xlsx</code> tự động đóng gói <b>Sheet Output</b> (Bảng tổng hợp dữ liệu) và <b>Sheet Data</b> (Danh mục chuẩn 9 cột) theo đúng tiêu chuẩn báo cáo của Vinmec.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            </section>
+        </main>
+
+        <!-- App Footer -->
+        <footer class="app-footer">
+            <div class="footer-content">
+                <span>© 2026 Bệnh Viện Đa Khoa Quốc Tế Vinmec Ocean Park 2 - Hệ Thống Báo Cáo Giao Ban Hoạt Động Ngày</span>
+                <span>Node.js Fullstack & SQLite Engine v2.0</span>
+            </div>
+        </footer>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- MODAL: TẠO TÀI KHOẢN KHOA MỚI (Admin Only) -->
+    <!-- ========================================================================= -->
+    <div id="createUserModal" class="modal-overlay" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-user-plus"></i> Tạo Tài Khoản Khoa / Phòng Mới</h3>
+                <button class="btn-close-modal" id="btnCloseCreateUserModal">&times;</button>
+            </div>
+            <form id="createUserForm">
+                <div class="form-group">
+                    <label for="newUsername">Tên đăng nhập (Username) <span class="required">*</span></label>
+                    <input type="text" id="newUsername" class="form-control" placeholder="ví dụ: khoa_nhikhoa" required>
+                </div>
+                <div class="form-group">
+                    <label for="newPassword">Mật khẩu khởi tạo <span class="required">*</span></label>
+                    <input type="password" id="newPassword" class="form-control" placeholder="Tối thiểu 6 ký tự" required>
+                </div>
+                <div class="form-group">
+                    <label for="newFullName">Tên khoa / Người phụ trách <span class="required">*</span></label>
+                    <input type="text" id="newFullName" class="form-control" placeholder="ví dụ: Khoa Nhi Tổng Hợp" required>
+                </div>
+                <div class="form-group">
+                    <label for="newFacility">Gán Cơ Sở <span class="required">*</span></label>
+                    <select id="newFacility" class="form-control" required>
+                        <option value="Bệnh viện">Bệnh viện Vinmec</option>
+                        <option value="PK OCP1">Phòng khám OCP1</option>
+                        <option value="PK OCP2">Phòng khám OCP2</option>
+                        <option value="ALL">Toàn viện (Tất cả cơ sở)</option>
+                    </select>
+                </div>
+                <div class="form-group">
+                    <div class="dept-picker-header">
+                        <label>Gán Chuyên Khoa Phụ Trách <span class="required">*</span></label>
+                        <div class="dept-quick-actions">
+                            <button type="button" class="btn-quick-tag" id="btnSelectAllDepts">Tất cả (All)</button>
+                            <button type="button" class="btn-quick-tag" id="btnSelectCLSDepts">Khối Cận LS</button>
+                            <button type="button" class="btn-quick-tag" id="btnClearDepts">Bỏ chọn</button>
+                        </div>
+                    </div>
+                    
+                    <!-- Search bar for departments -->
+                    <div class="dept-search-box">
+                        <i class="fa-solid fa-magnifying-glass search-icon"></i>
+                        <input type="text" id="deptSearchInput" class="form-control form-control-sm" placeholder="Tìm kiếm chuyên khoa trong 17 khoa...">
+                    </div>
+
+                    <!-- Selected count info -->
+                    <div class="dept-selected-bar">
+                        <span id="deptSelectedCountText"><i class="fa-solid fa-check-double"></i> Đã chọn: <b>0</b> chuyên khoa</span>
+                    </div>
+
+                    <!-- Interactive Department Chips Container -->
+                    <div class="dept-chips-container" id="deptMultiSelectContainer">
+                        <!-- Populated dynamically as interactive toggle chips by app.js -->
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label for="newRole">Vai trò tài khoản</label>
+                    <select id="newRole" class="form-control">
+                        <option value="department">Nhân viên Khoa / Phòng</option>
+                        <option value="admin">Quản Trị Viên (Admin)</option>
+                    </select>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="btnCancelCreateUser">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Tạo Tài Khoản</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- ========================================================================= -->
+    <!-- MODAL: ĐỔI MẬT KHẨU -->
+    <!-- ========================================================================= -->
+    <div id="changePasswordModal" class="modal-overlay" style="display: none;">
+        <div class="modal-card">
+            <div class="modal-header">
+                <h3><i class="fa-solid fa-key"></i> Đổi Mật Khẩu Cá Nhân</h3>
+                <button class="btn-close-modal" id="btnCloseChangePassModal">&times;</button>
+            </div>
+            <form id="changePasswordForm">
+                <div class="form-group">
+                    <label for="currentPass">Mật khẩu hiện tại <span class="required">*</span></label>
+                    <input type="password" id="currentPass" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="newPass">Mật khẩu mới (tối thiểu 6 ký tự) <span class="required">*</span></label>
+                    <input type="password" id="newPass" class="form-control" required>
+                </div>
+                <div class="form-group">
+                    <label for="confirmPass">Xác nhận mật khẩu mới <span class="required">*</span></label>
+                    <input type="password" id="confirmPass" class="form-control" required>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" id="btnCancelChangePass">Hủy</button>
+                    <button type="submit" class="btn btn-primary">Cập Nhật Mật Khẩu</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <!-- Frontend Javascript Bundle -->
+    <script src="js/app.js"></script>
+</body>
+</html>
