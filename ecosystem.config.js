@@ -3,13 +3,14 @@ module.exports = {
     {
       name: 'vinmec-reporting',
       script: 'server.js',
+      exec_mode: 'fork',
       instances: 1, // Single instance for SQLite WAL mode integrity
       autorestart: true,
       watch: false, // Turn off in production
       max_memory_restart: '500M',
       env: {
         NODE_ENV: 'production',
-        PORT: 8080
+        PORT: 4001
       },
       // Logging
       output: './logs/pm2-out.log',
