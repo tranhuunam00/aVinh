@@ -1,0 +1,7 @@
+node_modules/
+logs/
+.env
+data/*.sqlite-journal
+data/*.sqlite-wal
+data/*.sqlite-shm
+.DS_Store
