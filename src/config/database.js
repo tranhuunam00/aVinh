@@ -124,33 +124,52 @@ async function initDatabase() {
         console.log('👑 Đã tạo tài khoản SUPER ADMIN mặc định: username=admin | password=Vinmec@2026');
     }
 
-    // 5. Seed Department accounts for convenience if users count is only admin
-    const userCountRow = await get("SELECT COUNT(*) as count FROM users");
-    if (userCountRow.count <= 1) {
-        const salt = bcrypt.genSaltSync(10);
-        const now = new Date().toISOString();
-        
-        const defaultDepts = [
-            { username: 'khoa_capcuu', name: 'Khoa Cấp Cứu', dept: 'Cấp cứu', facility: 'Bệnh viện' },
-            { username: 'khoa_khambenh', name: 'Khoa Khám Bệnh', dept: 'Khám bệnh', facility: 'Bệnh viện' },
-            { username: 'khoa_ngoai', name: 'Khoa Ngoại Tổng Hợp', dept: 'Ngoại tổng hợp', facility: 'Bệnh viện' },
-            { username: 'khoa_san', name: 'Khoa Phụ Sản', dept: 'Phụ sản', facility: 'Bệnh viện' },
-            { username: 'khoa_noi', name: 'Khoa Nội Tổng Hợp', dept: 'Nội tổng hợp', facility: 'Bệnh viện' },
-            { username: 'khoa_nhisongsinh', name: 'Khoa Nhi Sơ Sinh', dept: 'Nhi sơ sinh', facility: 'Bệnh viện' },
-            { username: 'khoa_cdha', name: 'Khoa Chẩn Đoán Hình Ảnh', dept: 'Chẩn đoán hình ảnh', facility: 'Bệnh viện' },
-            { username: 'khoa_xetnghiem', name: 'Khoa Xét Nghiệm', dept: 'Xét nghiệm', facility: 'Bệnh viện' },
-            { username: 'khoa_dqct', name: 'Khoa Điện Quang Can Thiệp', dept: 'Điện quang can thiệp', facility: 'Bệnh viện' }
-        ];
+    // 6. MIGRATION: Cập nhật & Khởi tạo chuẩn 17 Tài Khoản Khoa (baocao_tenkhoa)
+    const officialDeptAccounts = [
+        { username: 'baocao_capcuu', name: 'Khoa Cấp Cứu', dept: 'Cấp cứu', facility: 'ALL' },
+        { username: 'baocao_khambenh', name: 'Khoa Khám Bệnh', dept: 'Khám bệnh', facility: 'ALL' },
+        { username: 'baocao_ranghammat', name: 'Khoa Răng Hàm Mặt', dept: 'Răng hàm mặt', facility: 'ALL' },
+        { username: 'baocao_taimuihong', name: 'Khoa Tai Mũi Họng', dept: 'Tai mũi họng', facility: 'ALL' },
+        { username: 'baocao_nhankhoa', name: 'Khoa Nhãn Khoa', dept: 'Nhãn khoa', facility: 'ALL' },
+        { username: 'baocao_dalieu', name: 'Khoa Da Liễu', dept: 'Da liễu', facility: 'ALL' },
+        { username: 'baocao_vaccine', name: 'Khoa Vaccine', dept: 'Vaccine', facility: 'ALL' },
+        { username: 'baocao_noi', name: 'Khoa Nội Tổng Hợp', dept: 'Nội tổng hợp', facility: 'ALL' },
+        { username: 'baocao_ngoai', name: 'Khoa Ngoại Tổng Hợp', dept: 'Ngoại tổng hợp', facility: 'ALL' },
+        { username: 'baocao_ctch', name: 'Khoa Chấn Thương Chỉnh Hình', dept: 'Chấn thương chỉnh hình', facility: 'ALL' },
+        { username: 'baocao_tkcs', name: 'Khoa Thần Kinh Cột Sống', dept: 'Thần kinh cột sống', facility: 'ALL' },
+        { username: 'baocao_phcn', name: 'Khoa Phục Hồi Chức Năng', dept: 'Phục hồi chức năng', facility: 'ALL' },
+        { username: 'baocao_san', name: 'Khoa Phụ Sản', dept: 'Phụ sản', facility: 'ALL' },
+        { username: 'baocao_nhi', name: 'Khoa Nhi Sơ Sinh', dept: 'Nhi sơ sinh', facility: 'ALL' },
+        { username: 'baocao_xetnghiem', name: 'Khoa Xét Nghiệm', dept: 'Xét nghiệm', facility: 'ALL' },
+        { username: 'baocao_cdha', name: 'Khoa Chẩn Đoán Hình Ảnh', dept: 'Chẩn đoán hình ảnh', facility: 'ALL' },
+        { username: 'baocao_dqct', name: 'Khoa Điện Quang Can Thiệp', dept: 'Điện quang can thiệp', facility: 'ALL' }
+    ];
 
-        for (const d of defaultDepts) {
-            const passHash = bcrypt.hashSync('123456', salt);
+    const salt = bcrypt.genSaltSync(10);
+    const defaultDeptPassHash = bcrypt.hashSync('Vinmec@2026', salt);
+    const now = new Date().toISOString();
+
+    for (const d of officialDeptAccounts) {
+        const existingUser = await get("SELECT id FROM users WHERE username = ?", [d.username]);
+        if (existingUser) {
             await run(`
-                INSERT OR IGNORE INTO users (username, password_hash, full_name, role, facility, department, is_active, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
-            `, [d.username, passHash, d.name, 'department', d.facility, d.dept, 1, now, now]);
+                UPDATE users 
+                SET full_name = ?, role = 'department', facility = ?, department = ?, is_active = 1, updated_at = ?
+                WHERE id = ?
+            `, [d.name, d.facility, d.dept, now, existingUser.id]);
+        } else {
+            await run(`
+                INSERT INTO users (username, password_hash, full_name, role, facility, department, is_active, created_at, updated_at)
+                VALUES (?, ?, ?, 'department', ?, ?, 1, ?, ?)
+            `, [d.username, defaultDeptPassHash, d.name, d.facility, d.dept, now, now]);
         }
-        console.log('🏥 Đã tạo sẵn tài khoản mẫu cho các khoa (Mật khẩu mặc định: 123456)');
     }
+
+    // Dọn dẹp tài khoản demo cũ không nằm trong danh sách 17 khoa chuẩn và admin
+    const keepUsernames = ['admin', ...officialDeptAccounts.map(a => a.username)];
+    const placeholders = keepUsernames.map(() => '?').join(',');
+    await run(`DELETE FROM users WHERE username NOT IN (${placeholders})`, keepUsernames);
+    console.log(`🏥 Đã hoàn tất Migration: Chuẩn hóa 17 tài khoản khoa (baocao_tenkhoa | pass: Vinmec@2026)`);
 
     // 6. Seed sample reports for today if none exist
     const todayStr = new Date().toISOString().split('T')[0];

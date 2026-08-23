@@ -10,7 +10,7 @@ const MASTER_DATA = {
         "Vaccine",
         "Nội tổng hợp",
         "Ngoại tổng hợp",
-        "Chấn  thương chỉnh hình",
+        "Chấn thương chỉnh hình",
         "Thần kinh cột sống",
         "Phục hồi chức năng",
         "Phụ sản",
