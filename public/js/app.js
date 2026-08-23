@@ -598,21 +598,9 @@ document.addEventListener('DOMContentLoaded', () => {
     });
 
     function updateDepartmentRuleAlert(dept) {
-        let ruleMsg = `Khoa ${dept}: Các trường nhập liệu đã được tùy biến tự động theo đúng danh mục hoạt động.`;
-        
-        if (dept === 'Xét nghiệm') {
-            ruleMsg = `🔬 <b>Khoa Xét nghiệm:</b> Hiển thị chuyên biệt 7 nhóm xét nghiệm (Sinh hóa, Huyết học, Vi sinh, Tế bào, Mô bệnh học, Hóa mô miễn dịch, Di truyền).`;
-        } else if (dept === 'Chẩn đoán hình ảnh') {
-            ruleMsg = `🩻 <b>Khoa CĐHA:</b> Hiển thị danh mục riêng (Siêu âm, ABUS, XQ, Panorama, Mammo, MSCT, CBCT, MRI, DEXA, Teleradiology).`;
-        } else if (dept === 'Điện quang can thiệp') {
-            ruleMsg = `⚡ <b>Khoa ĐQCT:</b> Hiển thị chuyên biệt các kỹ thuật can thiệp (Can thiệp SA, Can thiệp CT, Can thiệp XA).`;
-        } else if (dept === 'Phụ sản') {
-            ruleMsg = `🤰 <b>Khoa Phụ sản:</b> Tự động bật thêm các trường "Chăm sóc sau sinh", "Hỗ trợ sinh đẻ", "Phẫu thuật mổ lấy thai".`;
-        } else if (['Khám bệnh', 'Cấp cứu', 'Nội tổng hợp'].includes(dept)) {
-            ruleMsg = `ℹ️ <b>Quy định:</b> Khoa ${dept} được tự động ẩn trường "Phẫu thuật" theo ghi chú form của bệnh viện.`;
+        if (deptRuleAlert) {
+            deptRuleAlert.style.display = 'none';
         }
-
-        deptRuleText.innerHTML = ruleMsg;
     }
 
     async function checkCurrentDepartmentStatus() {
