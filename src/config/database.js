@@ -94,12 +94,6 @@ async function initDatabase() {
         )
     `);
 
-    // Clean temporary/obsolete facilities & rename to standard BV VMOCP2
-    await run("DELETE FROM facilities WHERE name IN ('cs3', 'Bệnh viện c')");
-    await run("UPDATE facilities SET name = 'BV VMOCP2', description = 'Bệnh Viện Đa Khoa Quốc Tế Vinmec Ocean Park 2' WHERE name IN ('Bệnh viện', 'Bệnh viện Vinmec')");
-    await run("UPDATE daily_reports SET facility = 'BV VMOCP2' WHERE facility IN ('Bệnh viện', 'Bệnh viện Vinmec', 'cs3', 'Bệnh viện c')");
-    await run("UPDATE users SET facility = 'BV VMOCP2' WHERE facility IN ('Bệnh viện', 'Bệnh viện Vinmec', 'cs3', 'Bệnh viện c')");
-
     // Ensure 3 standard facilities always exist
     const now = new Date().toISOString();
     const defaultFacilities = [
@@ -125,7 +119,7 @@ async function initDatabase() {
         console.log('👑 Đã tạo tài khoản SUPER ADMIN mặc định: username=admin | password=Vinmec@2026');
     }
 
-    // 6. MIGRATION: Cập nhật & Khởi tạo chuẩn 17 Tài Khoản Khoa (baocao_tenkhoa)
+    // 6. Cập nhật & Khởi tạo chuẩn 17 Tài Khoản Khoa (baocao_tenkhoa) nếu chưa có
     const officialDeptAccounts = [
         { username: 'baocao_capcuu', name: 'Khoa Cấp Cứu', dept: 'Cấp cứu', facility: 'ALL' },
         { username: 'baocao_khambenh', name: 'Khoa Khám Bệnh', dept: 'Khám bệnh', facility: 'ALL' },
@@ -151,92 +145,12 @@ async function initDatabase() {
 
     for (const d of officialDeptAccounts) {
         const existingUser = await get("SELECT id FROM users WHERE username = ?", [d.username]);
-        if (existingUser) {
-            await run(`
-                UPDATE users 
-                SET full_name = ?, role = 'department', facility = ?, department = ?, is_active = 1, updated_at = ?
-                WHERE id = ?
-            `, [d.name, d.facility, d.dept, now, existingUser.id]);
-        } else {
+        if (!existingUser) {
             await run(`
                 INSERT INTO users (username, password_hash, full_name, role, facility, department, is_active, created_at, updated_at)
                 VALUES (?, ?, ?, 'department', ?, ?, 1, ?, ?)
             `, [d.username, defaultDeptPassHash, d.name, d.facility, d.dept, now, now]);
         }
-    }
-
-    // Dọn dẹp tài khoản demo cũ không nằm trong danh sách 17 khoa chuẩn và admin
-    const keepUsernames = ['admin', ...officialDeptAccounts.map(a => a.username)];
-    const placeholders = keepUsernames.map(() => '?').join(',');
-    await run(`DELETE FROM users WHERE username NOT IN (${placeholders})`, keepUsernames);
-    console.log(`🏥 Đã hoàn tất Migration: Chuẩn hóa 17 tài khoản khoa (baocao_tenkhoa | pass: Vinmec@2026)`);
-
-    // 6. Seed sample reports for today if none exist
-    const todayStr = new Date().toISOString().split('T')[0];
-    const reportCount = await get("SELECT COUNT(*) as count FROM daily_reports WHERE report_date = ?", [todayStr]);
-    if (reportCount.count === 0) {
-        const now = new Date().toISOString();
-        const sampleReports = [
-            {
-                facility: 'Bệnh viện',
-                department: 'Cấp cứu',
-                data: {
-                    kham_benh: { "Khám cấp cứu": 32, "Khám chuyên khoa": 0 },
-                    dieu_tri: { "Ngoại trú": 18, "Nội trú": 12, "Daycare": 2 },
-                    dich_vu: { "Khám bệnh": 32, "Thủ thuật": 7, "Chăm sóc toàn diện": 4 },
-                    tinh_trang: { "Vào viện": 12, "Ra viện theo chỉ định": 14, "Ra viện không theo chỉ định": 1, "Chuyển viện": 2, "Nặng xin về": 0, "Tử vong": 0 }
-                }
-            },
-            {
-                facility: 'Bệnh viện',
-                department: 'Ngoại tổng hợp',
-                data: {
-                    kham_benh: { "Khám chuyên khoa": 45, "Khám tổng quát": 6 },
-                    dieu_tri: { "Ngoại trú": 24, "Nội trú": 20, "Daycare": 8 },
-                    dich_vu: { "Khám bệnh": 51, "Thủ thuật": 16, "Phẫu thuật": 9, "Chăm sóc toàn diện": 20 },
-                    tinh_trang: { "Vào viện": 9, "Ra viện theo chỉ định": 7, "Chuyển viện": 0, "Nặng xin về": 0, "Tử vong": 0 }
-                }
-            },
-            {
-                facility: 'Bệnh viện',
-                department: 'Phụ sản',
-                data: {
-                    kham_benh: { "Khám chuyên khoa": 38, "Khám tổng quát": 4 },
-                    dieu_tri: { "Ngoại trú": 18, "Nội trú": 16, "Daycare": 4 },
-                    dich_vu: { "Khám bệnh": 42, "Thủ thuật": 8, "Phẫu thuật": 5, "Chăm sóc sau sinh": 14, "Hỗ trợ sinh đẻ": 6, "Chăm sóc toàn diện": 16 },
-                    tinh_trang: { "Vào viện": 6, "Ra viện theo chỉ định": 5, "Chuyển viện": 0, "Nặng xin về": 0, "Tử vong": 0 }
-                }
-            },
-            {
-                facility: 'Bệnh viện',
-                department: 'Xét nghiệm',
-                data: {
-                    xet_nghiem: { "Sinh hóa": 165, "Huyết học": 125, "Vi sinh": 42, "Tế bào học": 15, "Mô bệnh học": 9, "Hóa mô miễn dịch": 5, "Di truyền": 3 }
-                }
-            },
-            {
-                facility: 'Bệnh viện',
-                department: 'Chẩn đoán hình ảnh',
-                data: {
-                    cdha: { "Siêu âm": 92, "Siêu âm ABUS": 14, "XQ Tổng quát": 70, "XQ Panorama": 10, "XQ Mammo": 8, "MSCT": 20, "CBCT": 5, "MRI": 18, "DEXA": 6, "Teleradiology": 0 }
-                }
-            },
-            {
-                facility: 'Bệnh viện',
-                department: 'Điện quang can thiệp',
-                data: {
-                    dqct: { "Can thiệp SA": 7, "Can thiệp CT": 4, "Can thiệp XA": 3 }
-                }
-            }
-        ];
-
-        for (const sr of sampleReports) {
-            await run(`
-                INSERT INTO daily_reports (report_date, facility, department, submitted_by, data_json, created_at, updated_at)
-                VALUES (?, ?, ?, ?, ?, ?, ?)
-            `, [todayStr, sr.facility, sr.department, 1, JSON.stringify(sr.data), now, now]);
-        }
-        console.log(`📊 Đã khởi tạo dữ liệu mẫu ngày hôm nay (${todayStr}) cho 6 khoa.`);
     }
 }
 
