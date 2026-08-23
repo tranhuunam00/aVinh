@@ -67,8 +67,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnModeWeekly = document.getElementById('btnModeWeekly');
     const btnModeMonthly = document.getElementById('btnModeMonthly');
     const filterItemDate = document.getElementById('filterItemDate');
+    const filterItemWeek = document.getElementById('filterItemWeek');
     const filterItemMonth = document.getElementById('filterItemMonth');
     const dashDateFilter = document.getElementById('dashDateFilter');
+    const dashWeekSelect = document.getElementById('dashWeekSelect');
+    const btnPrevWeek = document.getElementById('btnPrevWeek');
+    const btnNextWeek = document.getElementById('btnNextWeek');
     const dashMonthFilter = document.getElementById('dashMonthFilter');
     const dashFacilityFilter = document.getElementById('dashFacilityFilter');
     const btnRefreshDashboard = document.getElementById('btnRefreshDashboard');
@@ -888,6 +892,50 @@ document.addEventListener('DOMContentLoaded', () => {
     // =========================================================================
     // TAB 2: POWER-BI STYLE DASHBOARD (Daily, Weekly, Monthly Views)
     // =========================================================================
+    function populateWeekDropdown() {
+        if (!dashWeekSelect) return;
+        dashWeekSelect.innerHTML = '';
+
+        const today = new Date();
+        const curDay = today.getDay();
+        const diffToMon = curDay === 0 ? -6 : 1 - curDay;
+        const curMon = new Date(today);
+        curMon.setDate(today.getDate() + diffToMon);
+        const curMonStr = curMon.toISOString().split('T')[0];
+
+        // Generate 25 weeks (20 weeks in the past + 4 weeks in the future)
+        for (let i = 4; i >= -20; i--) {
+            const mon = new Date(curMon);
+            mon.setDate(curMon.getDate() + (i * 7));
+            const sun = new Date(mon);
+            sun.setDate(mon.getDate() + 6);
+
+            const monStr = mon.toISOString().split('T')[0];
+            const monDisplay = `${mon.getDate()}/${mon.getMonth() + 1}`;
+            const sunDisplay = `${sun.getDate()}/${sun.getMonth() + 1}/${sun.getFullYear()}`;
+
+            // Calculate ISO week number
+            const target = new Date(mon.valueOf());
+            const dayNr = (mon.getDay() + 6) % 7;
+            target.setDate(target.getDate() - dayNr + 3);
+            const firstThursday = target.valueOf();
+            target.setMonth(0, 1);
+            if (target.getDay() !== 4) {
+                target.setMonth(0, 1 + ((4 - target.getDay()) + 7) % 7);
+            }
+            const weekNum = 1 + Math.ceil((firstThursday - target) / 604800000);
+
+            const isCurrentWeek = (monStr === curMonStr);
+            const label = `Tuần ${weekNum}: ${monDisplay} - ${sunDisplay}${isCurrentWeek ? ' (Hiện tại)' : ''}`;
+
+            const opt = document.createElement('option');
+            opt.value = monStr;
+            opt.textContent = label;
+            if (isCurrentWeek) opt.selected = true;
+            dashWeekSelect.appendChild(opt);
+        }
+    }
+
     if (btnModeDaily) {
         btnModeDaily.addEventListener('click', () => {
             state.dashMode = 'daily';
@@ -898,6 +946,9 @@ document.addEventListener('DOMContentLoaded', () => {
     if (btnModeWeekly) {
         btnModeWeekly.addEventListener('click', () => {
             state.dashMode = 'weekly';
+            if (!dashWeekSelect.options.length) {
+                populateWeekDropdown();
+            }
             updateDashModeUI();
             loadDashboardData();
         });
@@ -910,6 +961,26 @@ document.addEventListener('DOMContentLoaded', () => {
         });
     }
 
+    if (btnPrevWeek) {
+        btnPrevWeek.addEventListener('click', () => {
+            if (dashWeekSelect.selectedIndex < dashWeekSelect.options.length - 1) {
+                dashWeekSelect.selectedIndex++;
+                loadDashboardData();
+            }
+        });
+    }
+    if (btnNextWeek) {
+        btnNextWeek.addEventListener('click', () => {
+            if (dashWeekSelect.selectedIndex > 0) {
+                dashWeekSelect.selectedIndex--;
+                loadDashboardData();
+            }
+        });
+    }
+
+    if (dashWeekSelect) {
+        dashWeekSelect.addEventListener('change', loadDashboardData);
+    }
     if (dashMonthFilter) {
         dashMonthFilter.addEventListener('change', loadDashboardData);
     }
@@ -929,21 +1000,23 @@ document.addEventListener('DOMContentLoaded', () => {
         if (mode === 'daily') {
             if (btnModeDaily) btnModeDaily.classList.add('active');
             if (filterItemDate) filterItemDate.style.display = 'flex';
+            if (filterItemWeek) filterItemWeek.style.display = 'none';
             if (filterItemMonth) filterItemMonth.style.display = 'none';
-            const lbl = document.getElementById('dashDateLabel');
-            if (lbl) lbl.textContent = 'Ngày:';
         } else if (mode === 'weekly') {
             if (btnModeWeekly) btnModeWeekly.classList.add('active');
-            if (filterItemDate) filterItemDate.style.display = 'flex';
+            if (filterItemDate) filterItemDate.style.display = 'none';
+            if (filterItemWeek) filterItemWeek.style.display = 'flex';
             if (filterItemMonth) filterItemMonth.style.display = 'none';
-            const lbl = document.getElementById('dashDateLabel');
-            if (lbl) lbl.textContent = 'Chọn Ngày trong Tuần:';
         } else if (mode === 'monthly') {
             if (btnModeMonthly) btnModeMonthly.classList.add('active');
             if (filterItemDate) filterItemDate.style.display = 'none';
+            if (filterItemWeek) filterItemWeek.style.display = 'none';
             if (filterItemMonth) filterItemMonth.style.display = 'flex';
         }
     }
+
+    // Initialize week dropdown on startup
+    populateWeekDropdown();
 
     async function loadDashboardData() {
         const facVal = dashFacilityFilter.value;
@@ -965,7 +1038,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 console.warn('Daily dashboard load error:', e);
             }
         } else if (mode === 'weekly') {
-            const dateVal = dashDateFilter.value || inputDate.value;
+            const dateVal = (dashWeekSelect && dashWeekSelect.value) || state.currentReportDate;
             try {
                 const res = await apiRequest(`/api/dashboard/weekly?date=${dateVal}&facility=${encodeURIComponent(facVal)}`);
                 if (res.ok) {
@@ -975,7 +1048,7 @@ document.addEventListener('DOMContentLoaded', () => {
                         document.getElementById('dashPeriodLabel').textContent = `${data.week_range.label}`;
                         document.getElementById('dashComparisonContextText').textContent = `So sánh với cùng kỳ tuần trước (${formatDateDisplay(data.week_range.prev_start_date)} - ${formatDateDisplay(data.week_range.prev_end_date)})`;
                     }
-                    document.getElementById('dashSubTitle').textContent = `Báo cáo tổng hợp Tuần (${formatDateDisplay(data.week_range.start_date)} - ${formatDateDisplay(data.week_range.end_date)}) - ${getFacilityFullName(facVal)}`;
+                    document.getElementById('dashSubTitle').textContent = `Báo cáo tổng hợp ${dashWeekSelect.options[dashWeekSelect.selectedIndex] ? dashWeekSelect.options[dashWeekSelect.selectedIndex].text : 'Tuần'} - ${getFacilityFullName(facVal)}`;
 
                     renderDashboardMetrics(data.summary, data.comparison);
                     renderWeeklyCharts(data);

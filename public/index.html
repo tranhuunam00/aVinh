@@ -264,10 +264,26 @@
                             </button>
                         </div>
 
-                        <!-- Date Filter for Daily & Weekly -->
+                        <!-- Date Filter for Daily -->
                         <div class="filter-item" id="filterItemDate">
-                            <label for="dashDateFilter"><i class="fa-regular fa-calendar"></i> <span id="dashDateLabel">Ngày:</span></label>
+                            <label for="dashDateFilter"><i class="fa-regular fa-calendar"></i> Ngày:</label>
                             <input type="date" id="dashDateFilter" class="form-control">
+                        </div>
+
+                        <!-- Dedicated Week Filter for Weekly (T2 - CN) -->
+                        <div class="filter-item" id="filterItemWeek" style="display: none;">
+                            <label for="dashWeekSelect"><i class="fa-solid fa-calendar-week"></i> Chọn Tuần:</label>
+                            <div style="display: inline-flex; align-items: center; gap: 4px;">
+                                <button type="button" class="btn btn-secondary btn-sm" id="btnPrevWeek" title="Tuần trước" style="padding: 4px 8px; height: 36px;">
+                                    <i class="fa-solid fa-chevron-left"></i>
+                                </button>
+                                <select id="dashWeekSelect" class="form-control" style="font-weight: 700; color: var(--primary); min-width: 250px; height: 36px;">
+                                    <!-- Populated dynamically by app.js -->
+                                </select>
+                                <button type="button" class="btn btn-secondary btn-sm" id="btnNextWeek" title="Tuần sau" style="padding: 4px 8px; height: 36px;">
+                                    <i class="fa-solid fa-chevron-right"></i>
+                                </button>
+                            </div>
                         </div>
 
                         <!-- Month Filter for Monthly -->
