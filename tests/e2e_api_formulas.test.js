@@ -15,7 +15,7 @@ async function runE2E() {
     console.log('  🌐 RUNNING LIVE API ENDPOINT FORMULA TEST SUITE');
     console.log('=============================================================\n');
 
-    const BASE_URL = 'http://127.0.0.1:8080';
+    const BASE_URL = 'http://127.0.0.1:4001';
 
     // 1. Admin Login
     console.log('  [1/5] Testing Admin Login...');

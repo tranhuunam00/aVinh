@@ -10,7 +10,7 @@
 
 const assert = require('assert');
 
-const BASE_URL = 'http://127.0.0.1:8080';
+const BASE_URL = 'http://127.0.0.1:4001';
 
 async function verifyFacilityAggregation() {
     console.log('\n========================================================================================');

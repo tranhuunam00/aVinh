@@ -6,7 +6,7 @@ const assert = require('assert');
 const { get, run } = require('../src/config/database');
 const bcrypt = require('bcryptjs');
 
-const BASE_URL = 'http://127.0.0.1:8080';
+const BASE_URL = 'http://127.0.0.1:4001';
 
 async function testMultiDeptUserView() {
     console.log('\n=============================================================');
