@@ -48,7 +48,7 @@ async function startServer() {
             console.log(` 🚀 Server Node.js đang chạy tại: http://localhost:${PORT}`);
             console.log(` 🌐 Mạng nội bộ (LAN): http://<IP_MÁY_BẠN>:${PORT}`);
             console.log(' 👑 Tài khoản SUPER ADMIN: username=admin | password=Vinmec@2026');
-            console.log(' 🏥 17 Tài khoản khoa: username=baocao_<tenkhoa> | password=Vinmec@2026');
+            console.log(' 🏥 17 Tài khoản khoa: username=baocao_<tenkhoa> | password=123456');
             console.log('========================================================================');
         });
     } catch (err) {

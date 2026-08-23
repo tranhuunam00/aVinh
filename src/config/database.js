@@ -141,7 +141,7 @@ async function initDatabase() {
     ];
 
     const salt = bcrypt.genSaltSync(10);
-    const defaultDeptPassHash = bcrypt.hashSync('Vinmec@2026', salt);
+    const defaultDeptPassHash = bcrypt.hashSync('123456', salt);
 
     for (const d of officialDeptAccounts) {
         const existingUser = await get("SELECT id FROM users WHERE username = ?", [d.username]);
