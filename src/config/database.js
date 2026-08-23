@@ -84,7 +84,32 @@ async function initDatabase() {
         )
     `);
 
-    // 4. Seed Super Admin (1 Admin duy nhất ban đầu)
+    // 4. Create Facilities Table
+    await run(`
+        CREATE TABLE IF NOT EXISTS facilities (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            name TEXT UNIQUE NOT NULL,
+            description TEXT,
+            created_at TEXT NOT NULL
+        )
+    `);
+
+    // Seed default facilities if empty
+    const facilityCount = await get("SELECT COUNT(*) as count FROM facilities");
+    if (facilityCount.count === 0) {
+        const now = new Date().toISOString();
+        const defaultFacilities = [
+            { name: 'Bệnh viện', desc: 'Bệnh viện Đa Khoa Quốc Tế Vinmec Ocean Park 2' },
+            { name: 'PK OCP1', desc: 'Phòng khám Vinmec Ocean Park 1' },
+            { name: 'PK OCP2', desc: 'Phòng khám Vinmec Ocean Park 2' }
+        ];
+        for (const f of defaultFacilities) {
+            await run("INSERT INTO facilities (name, description, created_at) VALUES (?, ?, ?)", [f.name, f.desc, now]);
+        }
+        console.log('🏥 Đã khởi tạo 3 cơ sở mặc định: Bệnh viện, PK OCP1, PK OCP2');
+    }
+
+    // 5. Seed Super Admin (1 Admin duy nhất ban đầu)
     const existingAdmin = await get("SELECT * FROM users WHERE role = 'admin' LIMIT 1");
     if (!existingAdmin) {
         const salt = bcrypt.genSaltSync(10);

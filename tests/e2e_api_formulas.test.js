@@ -32,6 +32,8 @@ async function runE2E() {
 
     // 2. Submit Mock Reports for test date
     const testDate = '2026-11-20';
+    const { run } = require('../src/config/database');
+    await run("DELETE FROM daily_reports WHERE report_date = ?", [testDate]);
     console.log(`\n  [2/5] Submitting Test Reports for Date: ${testDate}...`);
 
     // Khoa Phụ Sản (Bệnh viện)

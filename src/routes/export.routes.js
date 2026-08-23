@@ -1,9 +1,10 @@
 const express = require('express');
 const router = express.Router();
 const { generateVinmecExcel } = require('../services/excel.service');
-const { requireAuth } = require('../middleware/auth');
+const { requireAuth, requireAdmin } = require('../middleware/auth');
 
 router.use(requireAuth);
+router.use(requireAdmin);
 
 // GET /api/export/excel
 router.get('/excel', async (req, res) => {

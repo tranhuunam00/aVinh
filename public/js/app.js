@@ -13,7 +13,10 @@ document.addEventListener('DOMContentLoaded', () => {
         currentFacility: 'Bệnh viện',
         currentDepartment: 'Cấp cứu',
         charts: {},
-        selectedModalDepts: new Set()
+        selectedModalDepts: new Set(),
+        selectedEditModalDepts: new Set(),
+        selectedModalFacilities: new Set(),
+        selectedEditModalFacilities: new Set()
     };
 
     // =========================================================================
@@ -39,6 +42,7 @@ document.addEventListener('DOMContentLoaded', () => {
     // Navigation Tabs
     const tabBtns = document.querySelectorAll('.tab-btn');
     const tabPanes = document.querySelectorAll('.tab-pane');
+    const tabDataBtn = document.getElementById('tabDataBtn');
     const tabUsersBtn = document.getElementById('tabUsersBtn');
     const tabGuideBtn = document.getElementById('tabGuideBtn');
 
@@ -81,7 +85,17 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnCancelCreateUser = document.getElementById('btnCancelCreateUser');
     const createUserForm = document.getElementById('createUserForm');
     
-    // Multi-Select Department Elements in Modal
+    // Multi-Select Facility & Department Elements in Modal
+    const facilityMultiSelectContainer = document.getElementById('facilityMultiSelectContainer');
+    const facilitySelectedCountText = document.getElementById('facilitySelectedCountText');
+    const btnSelectAllFacilities = document.getElementById('btnSelectAllFacilities');
+    const btnClearFacilities = document.getElementById('btnClearFacilities');
+
+    const editFacilityMultiSelectContainer = document.getElementById('editFacilityMultiSelectContainer');
+    const editFacilitySelectedCountText = document.getElementById('editFacilitySelectedCountText');
+    const btnEditSelectAllFacilities = document.getElementById('btnEditSelectAllFacilities');
+    const btnEditClearFacilities = document.getElementById('btnEditClearFacilities');
+
     const deptMultiSelectContainer = document.getElementById('deptMultiSelectContainer');
     const deptSearchInput = document.getElementById('deptSearchInput');
     const deptSelectedCountText = document.getElementById('deptSelectedCountText');
@@ -166,12 +180,17 @@ document.addEventListener('DOMContentLoaded', () => {
         dropUsername.textContent = u.username;
         dropDept.textContent = u.role === 'admin' ? 'Quản trị viên toàn viện' : `${u.department} - ${u.facility}`;
 
+        const quickExportBox = document.getElementById('quickExportBox');
         if (u.role === 'admin') {
+            if (tabDataBtn) tabDataBtn.style.display = 'flex';
             tabUsersBtn.style.display = 'flex';
             if (tabGuideBtn) tabGuideBtn.style.display = 'flex';
+            if (quickExportBox) quickExportBox.style.display = 'block';
         } else {
+            if (tabDataBtn) tabDataBtn.style.display = 'none';
             tabUsersBtn.style.display = 'none';
             if (tabGuideBtn) tabGuideBtn.style.display = 'none';
+            if (quickExportBox) quickExportBox.style.display = 'none';
         }
 
         await fetchMasterData();
@@ -234,10 +253,60 @@ document.addEventListener('DOMContentLoaded', () => {
             if (res.ok) {
                 state.masterData = await res.json();
                 populateDepartmentDropdowns();
+                populateFacilityDropdowns();
             }
         } catch (e) {
             console.error('Master data error:', e);
         }
+    }
+
+    function populateFacilityDropdowns() {
+        if (!state.masterData || !state.masterData.facilities) return;
+        const facList = state.masterData.facilities;
+
+        // 1. selectFacility in Form (for Admins or ALL)
+        if (state.currentUser && (state.currentUser.role === 'admin' || state.currentUser.facility === 'ALL')) {
+            const currentFormFac = selectFacility.value;
+            selectFacility.innerHTML = '';
+            facList.forEach(fac => {
+                const opt = document.createElement('option');
+                opt.value = fac;
+                opt.textContent = fac === 'Bệnh viện' ? 'Bệnh viện Vinmec' : fac;
+                selectFacility.appendChild(opt);
+            });
+            if (currentFormFac && facList.includes(currentFormFac)) {
+                selectFacility.value = currentFormFac;
+            }
+        }
+
+        // 2. dashFacilityFilter in Dashboard
+        const currentDashFac = dashFacilityFilter.value;
+        dashFacilityFilter.innerHTML = '<option value="ALL">Tất cả cơ sở</option>';
+        facList.forEach(fac => {
+            const opt = document.createElement('option');
+            opt.value = fac;
+            opt.textContent = fac;
+            dashFacilityFilter.appendChild(opt);
+        });
+        if (currentDashFac && (currentDashFac === 'ALL' || facList.includes(currentDashFac))) {
+            dashFacilityFilter.value = currentDashFac;
+        }
+
+        // 3. tableFacilityFilter in Data Tab
+        const currentTableFac = tableFacilityFilter.value;
+        tableFacilityFilter.innerHTML = '<option value="ALL">Tất cả cơ sở</option>';
+        facList.forEach(fac => {
+            const opt = document.createElement('option');
+            opt.value = fac;
+            opt.textContent = fac;
+            tableFacilityFilter.appendChild(opt);
+        });
+        if (currentTableFac && (currentTableFac === 'ALL' || facList.includes(currentTableFac))) {
+            tableFacilityFilter.value = currentTableFac;
+        }
+
+        renderModalFacilityChips();
+        renderEditModalFacilityChips();
     }
 
     function populateDepartmentDropdowns() {
@@ -287,15 +356,48 @@ document.addEventListener('DOMContentLoaded', () => {
         const u = state.currentUser;
         if (!u) return;
 
-        // 1. Facility Setup: If user has ALL or is Admin, let them select facility
+        // 1. Facility Setup (Supports Multi-Facility for accounts)
         if (u.role === 'admin' || u.facility === 'ALL') {
             selectFacility.disabled = false;
+            const facList = state.masterData ? state.masterData.facilities : [];
+            selectFacility.innerHTML = '';
+            facList.forEach(fac => {
+                const opt = document.createElement('option');
+                opt.value = fac;
+                opt.textContent = fac === 'Bệnh viện' ? 'Bệnh viện Vinmec' : fac;
+                selectFacility.appendChild(opt);
+            });
             if (!selectFacility.value || selectFacility.value === 'ALL') {
-                selectFacility.value = 'Bệnh viện';
+                selectFacility.value = facList[0] || 'Bệnh viện';
             }
         } else {
-            selectFacility.value = u.facility;
-            selectFacility.disabled = true;
+            const allowedFacilities = u.facility.split(',').map(s => s.trim()).filter(Boolean);
+            selectFacility.innerHTML = '';
+            allowedFacilities.forEach(fac => {
+                const opt = document.createElement('option');
+                opt.value = fac;
+                opt.textContent = fac === 'Bệnh viện' ? 'Bệnh viện Vinmec' : fac;
+                selectFacility.appendChild(opt);
+            });
+
+            if (allowedFacilities.length === 1) {
+                selectFacility.value = allowedFacilities[0];
+                selectFacility.disabled = true;
+            } else {
+                selectFacility.disabled = false;
+                if (!allowedFacilities.includes(selectFacility.value)) {
+                    selectFacility.value = allowedFacilities[0];
+                }
+            }
+
+            // In Dashboard filter: allow filtering between allowed facilities
+            dashFacilityFilter.innerHTML = '<option value="ALL">Tất cả cơ sở được gán</option>';
+            allowedFacilities.forEach(fac => {
+                const opt = document.createElement('option');
+                opt.value = fac;
+                opt.textContent = fac;
+                dashFacilityFilter.appendChild(opt);
+            });
         }
 
         // 2. Department Setup
@@ -303,7 +405,7 @@ document.addEventListener('DOMContentLoaded', () => {
             selectDepartment.disabled = false;
             deptLockNotice.style.display = 'none';
         } else {
-            const allowedDepts = u.department.split(',').map(s => s.trim());
+            const allowedDepts = u.department.split(',').map(s => s.trim()).filter(Boolean);
 
             // Populate department selector with only allowed departments
             selectDepartment.innerHTML = '';
@@ -603,6 +705,25 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
 
+    function getFacilityFullName(fac) {
+        if (!fac || fac === 'ALL') {
+            return 'Toàn Viện (Tất Cả Các Cơ Sở Bệnh Viện & Phòng Khám)';
+        }
+        if (state.masterData && state.masterData.facility_details && state.masterData.facility_details[fac]) {
+            return state.masterData.facility_details[fac];
+        }
+        if (fac === 'Bệnh viện') {
+            return 'Bệnh Viện Đa Khoa Quốc Tế Vinmec Ocean Park 2';
+        }
+        if (fac === 'PK OCP1') {
+            return 'Phòng Khám Đa Khoa Quốc Tế Vinmec Ocean Park 1';
+        }
+        if (fac === 'PK OCP2') {
+            return 'Phòng Khám Đa Khoa Quốc Tế Vinmec Ocean Park 2';
+        }
+        return fac;
+    }
+
     // =========================================================================
     // TAB 2: POWER-BI STYLE DASHBOARD
     // =========================================================================
@@ -610,7 +731,7 @@ document.addEventListener('DOMContentLoaded', () => {
         const dateVal = dashDateFilter.value || inputDate.value;
         const facVal = dashFacilityFilter.value;
 
-        document.getElementById('dashSubTitle').textContent = `Báo cáo số liệu ngày ${formatDateDisplay(dateVal)} - ${facVal === 'ALL' ? 'Toàn viện' : facVal}`;
+        document.getElementById('dashSubTitle').textContent = `Báo cáo số liệu ngày ${formatDateDisplay(dateVal)} - ${getFacilityFullName(facVal)}`;
 
         try {
             const res = await apiRequest(`/api/dashboard?date=${dateVal}&facility=${encodeURIComponent(facVal)}`);
@@ -939,6 +1060,9 @@ document.addEventListener('DOMContentLoaded', () => {
             const isAdmin = u.role === 'admin';
             const isActive = u.is_active === 1;
 
+            // Render facility badges
+            const facBadges = (u.facility || '').split(',').map(f => `<span class="badge-facility" style="margin: 2px 2px;">${f.trim()}</span>`).join(' ');
+
             // Render department badges
             const deptBadges = (u.department || '').split(',').map(d => `<span class="stat-pill" style="background:#F8FAFC; border-color:#CBD5E1; font-weight:700;">${d.trim()}</span>`).join(' ');
 
@@ -946,7 +1070,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td><b>${u.username}</b></td>
                 <td>${u.full_name}</td>
                 <td><span class="badge ${isAdmin ? 'badge-admin' : 'badge-accent'}">${isAdmin ? 'Super Admin' : 'Khoa / Phòng'}</span></td>
-                <td><span class="badge-facility">${u.facility}</span></td>
+                <td><div style="display:flex; flex-wrap:wrap; gap:4px;">${facBadges}</div></td>
                 <td><div class="stat-pill-group">${deptBadges}</div></td>
                 <td>
                     <span class="badge" style="${isActive ? 'background:#DCFCE7; color:#166534;' : 'background:#F1F5F9; color:#94A3B8;'}">
@@ -956,6 +1080,7 @@ document.addEventListener('DOMContentLoaded', () => {
                 <td style="font-size: 11px; color:#64748B;">${formatDateDisplay(u.created_at ? u.created_at.split('T')[0] : '')}</td>
                 <td>
                     <div class="table-actions">
+                        <button class="btn-action btn-edit-user" data-id="${u.id}" title="Chỉnh sửa tài khoản"><i class="fa-solid fa-pen-to-square"></i> Sửa</button>
                         <button class="btn-action btn-reset-pass" data-id="${u.id}" data-username="${u.username}" title="Đặt lại mật khẩu"><i class="fa-solid fa-key"></i> Đổi pass</button>
                         ${!isAdmin ? `
                             <button class="btn-action btn-toggle-active" data-id="${u.id}" data-active="${isActive}" title="${isActive ? 'Khóa tài khoản' : 'Mở khóa'}">
@@ -968,6 +1093,10 @@ document.addEventListener('DOMContentLoaded', () => {
                     </div>
                 </td>
             `;
+
+            tr.querySelector('.btn-edit-user').addEventListener('click', () => {
+                openEditUserModal(u);
+            });
 
             tr.querySelector('.btn-reset-pass').addEventListener('click', async () => {
                 const newPass = prompt(`Nhập mật khẩu mới cho tài khoản "${u.username}":`, '123456');
@@ -1017,6 +1146,289 @@ document.addEventListener('DOMContentLoaded', () => {
             }
 
             usersTableBody.appendChild(tr);
+        });
+    }
+
+    // =========================================================================
+    // EDIT USER MODAL LOGIC (ADMIN ONLY)
+    // =========================================================================
+    const editUserModal = document.getElementById('editUserModal');
+    const btnCloseEditUserModal = document.getElementById('btnCloseEditUserModal');
+    const btnCancelEditUser = document.getElementById('btnCancelEditUser');
+    const editUserForm = document.getElementById('editUserForm');
+    const editUserId = document.getElementById('editUserId');
+    const editUsername = document.getElementById('editUsername');
+    const editUserHeaderTitle = document.getElementById('editUserHeaderTitle');
+    const editFullName = document.getElementById('editFullName');
+    const editRole = document.getElementById('editRole');
+    const editIsActive = document.getElementById('editIsActive');
+    const editNewPassword = document.getElementById('editNewPassword');
+    const editDeptSearchInput = document.getElementById('editDeptSearchInput');
+    const editDeptSelectedCountText = document.getElementById('editDeptSelectedCountText');
+    const editDeptMultiSelectContainer = document.getElementById('editDeptMultiSelectContainer');
+    const btnEditSelectAllDepts = document.getElementById('btnEditSelectAllDepts');
+    const btnEditSelectCLSDepts = document.getElementById('btnEditSelectCLSDepts');
+    const btnEditClearDepts = document.getElementById('btnEditClearDepts');
+
+    function openEditUserModal(u) {
+        editUserId.value = u.id;
+        editUsername.value = u.username;
+        editUserHeaderTitle.textContent = `${u.username} (${u.full_name})`;
+        editFullName.value = u.full_name;
+        editRole.value = u.role;
+        editIsActive.value = u.is_active;
+        editNewPassword.value = '';
+        if (editDeptSearchInput) editDeptSearchInput.value = '';
+
+        // Facilities multi-select
+        state.selectedEditModalFacilities.clear();
+        if (u.facility === 'ALL') {
+            if (state.masterData && state.masterData.facilities) {
+                state.masterData.facilities.forEach(f => state.selectedEditModalFacilities.add(f));
+            }
+        } else if (u.facility) {
+            u.facility.split(',').map(s => s.trim()).filter(Boolean).forEach(f => {
+                state.selectedEditModalFacilities.add(f);
+            });
+        }
+        renderEditModalFacilityChips();
+
+        // Departments multi-select
+        state.selectedEditModalDepts.clear();
+        if (u.department === 'ALL') {
+            if (state.masterData) {
+                state.masterData.departments.forEach(d => state.selectedEditModalDepts.add(d));
+            }
+        } else if (u.department) {
+            u.department.split(',').map(s => s.trim()).filter(Boolean).forEach(d => {
+                state.selectedEditModalDepts.add(d);
+            });
+        }
+        renderEditModalDeptChips();
+
+        editUserModal.style.display = 'flex';
+    }
+
+    function renderEditModalFacilityChips() {
+        if (!editFacilityMultiSelectContainer || !state.masterData || !state.masterData.facilities) return;
+        editFacilityMultiSelectContainer.innerHTML = '';
+
+        state.masterData.facilities.forEach(fac => {
+            const isSelected = state.selectedEditModalFacilities.has(fac);
+            const chip = document.createElement('div');
+            chip.className = `dept-chip ${isSelected ? 'active' : ''}`;
+            chip.innerHTML = `
+                <i class="fa-solid ${isSelected ? 'fa-square-check' : 'fa-square'} chip-check"></i>
+                <span>${fac}</span>
+            `;
+
+            chip.addEventListener('click', () => {
+                if (state.selectedEditModalFacilities.has(fac)) {
+                    state.selectedEditModalFacilities.delete(fac);
+                } else {
+                    state.selectedEditModalFacilities.add(fac);
+                }
+                renderEditModalFacilityChips();
+            });
+
+            editFacilityMultiSelectContainer.appendChild(chip);
+        });
+
+        const count = state.selectedEditModalFacilities.size;
+        if (editFacilitySelectedCountText) {
+            editFacilitySelectedCountText.innerHTML = `<i class="fa-solid fa-check-double"></i> Đã chọn: <b style="color:#0A2540;">${count}</b> / ${state.masterData.facilities.length} cơ sở`;
+        }
+    }
+
+    function renderEditModalDeptChips() {
+        if (!editDeptMultiSelectContainer || !state.masterData) return;
+
+        editDeptMultiSelectContainer.innerHTML = '';
+        const searchVal = (editDeptSearchInput ? editDeptSearchInput.value || '' : '').toLowerCase().trim();
+
+        state.masterData.departments.forEach(dept => {
+            if (searchVal && !dept.toLowerCase().includes(searchVal)) return;
+
+            const isSelected = state.selectedEditModalDepts.has(dept);
+            const chip = document.createElement('div');
+            chip.className = `dept-chip ${isSelected ? 'active' : ''}`;
+            chip.innerHTML = `
+                <i class="fa-solid ${isSelected ? 'fa-square-check' : 'fa-square'} chip-check"></i>
+                <span>${dept}</span>
+            `;
+
+            chip.addEventListener('click', () => {
+                if (state.selectedEditModalDepts.has(dept)) {
+                    state.selectedEditModalDepts.delete(dept);
+                } else {
+                    state.selectedEditModalDepts.add(dept);
+                }
+                renderEditModalDeptChips();
+            });
+
+            editDeptMultiSelectContainer.appendChild(chip);
+        });
+
+        const count = state.selectedEditModalDepts.size;
+        if (editDeptSelectedCountText) {
+            editDeptSelectedCountText.innerHTML = `<i class="fa-solid fa-check-double"></i> Đã chọn: <b style="color:#0A2540;">${count}</b> / ${state.masterData ? state.masterData.departments.length : 17} chuyên khoa`;
+        }
+    }
+
+    if (btnEditSelectAllFacilities) {
+        btnEditSelectAllFacilities.addEventListener('click', () => {
+            if (state.masterData && state.masterData.facilities) {
+                state.masterData.facilities.forEach(f => state.selectedEditModalFacilities.add(f));
+                renderEditModalFacilityChips();
+            }
+        });
+    }
+    if (btnEditClearFacilities) {
+        btnEditClearFacilities.addEventListener('click', () => {
+            state.selectedEditModalFacilities.clear();
+            renderEditModalFacilityChips();
+        });
+    }
+
+    if (editDeptSearchInput) {
+        editDeptSearchInput.addEventListener('input', renderEditModalDeptChips);
+    }
+    if (btnEditSelectAllDepts) {
+        btnEditSelectAllDepts.addEventListener('click', () => {
+            if (state.masterData) {
+                state.masterData.departments.forEach(d => state.selectedEditModalDepts.add(d));
+                renderEditModalDeptChips();
+            }
+        });
+    }
+    if (btnEditSelectCLSDepts) {
+        btnEditSelectCLSDepts.addEventListener('click', () => {
+            state.selectedEditModalDepts.clear();
+            ['Xét nghiệm', 'Chẩn đoán hình ảnh', 'Điện quang can thiệp'].forEach(d => state.selectedEditModalDepts.add(d));
+            renderEditModalDeptChips();
+        });
+    }
+    if (btnEditClearDepts) {
+        btnEditClearDepts.addEventListener('click', () => {
+            state.selectedEditModalDepts.clear();
+            renderEditModalDeptChips();
+        });
+    }
+
+    if (btnCloseEditUserModal) {
+        btnCloseEditUserModal.addEventListener('click', () => {
+            editUserModal.style.display = 'none';
+        });
+    }
+    if (btnCancelEditUser) {
+        btnCancelEditUser.addEventListener('click', () => {
+            editUserModal.style.display = 'none';
+        });
+    }
+
+    if (editUserForm) {
+        editUserForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const id = editUserId.value;
+
+            if (state.selectedEditModalFacilities.size === 0) {
+                showToast('Vui lòng chọn ít nhất 1 cơ sở phụ trách cho tài khoản!', 'error');
+                return;
+            }
+
+            if (state.selectedEditModalDepts.size === 0) {
+                showToast('Vui lòng chọn ít nhất 1 chuyên khoa phụ trách cho tài khoản!', 'error');
+                return;
+            }
+
+            const selectedFacList = Array.from(state.selectedEditModalFacilities);
+            const facString = selectedFacList.length === state.masterData.facilities.length ? 'ALL' : selectedFacList.join(', ');
+
+            const selectedList = Array.from(state.selectedEditModalDepts);
+            const deptString = selectedList.length === state.masterData.departments.length ? 'ALL' : selectedList.join(', ');
+
+            const payload = {
+                full_name: editFullName.value.trim(),
+                facility: facString,
+                department: deptString,
+                role: editRole.value,
+                is_active: parseInt(editIsActive.value)
+            };
+
+            const newPass = editNewPassword.value.trim();
+            if (newPass) {
+                if (newPass.length < 6) {
+                    showToast('Mật khẩu mới nếu đổi phải có tối thiểu 6 ký tự!', 'error');
+                    return;
+                }
+                payload.new_password = newPass;
+            }
+
+            try {
+                const res = await apiRequest(`/api/users/${id}`, {
+                    method: 'PUT',
+                    body: payload
+                });
+                const data = await res.json();
+                if (res.ok) {
+                    showToast(data.message || 'Cập nhật tài khoản thành công!', 'success');
+                    editUserModal.style.display = 'none';
+                    loadUsersTable();
+                } else {
+                    showToast(data.error || 'Lỗi cập nhật tài khoản', 'error');
+                }
+            } catch (err) {
+                showToast('Lỗi máy chủ: ' + err.message, 'error');
+            }
+        });
+    }
+
+    // =========================================================================
+    // CREATE USER MODAL LOGIC (ADMIN ONLY)
+    // =========================================================================
+    function renderModalFacilityChips() {
+        if (!facilityMultiSelectContainer || !state.masterData || !state.masterData.facilities) return;
+        facilityMultiSelectContainer.innerHTML = '';
+
+        state.masterData.facilities.forEach(fac => {
+            const isSelected = state.selectedModalFacilities.has(fac);
+            const chip = document.createElement('div');
+            chip.className = `dept-chip ${isSelected ? 'active' : ''}`;
+            chip.innerHTML = `
+                <i class="fa-solid ${isSelected ? 'fa-square-check' : 'fa-square'} chip-check"></i>
+                <span>${fac}</span>
+            `;
+
+            chip.addEventListener('click', () => {
+                if (state.selectedModalFacilities.has(fac)) {
+                    state.selectedModalFacilities.delete(fac);
+                } else {
+                    state.selectedModalFacilities.add(fac);
+                }
+                renderModalFacilityChips();
+            });
+
+            facilityMultiSelectContainer.appendChild(chip);
+        });
+
+        const count = state.selectedModalFacilities.size;
+        if (facilitySelectedCountText) {
+            facilitySelectedCountText.innerHTML = `<i class="fa-solid fa-check-double"></i> Đã chọn: <b style="color:#0A2540;">${count}</b> / ${state.masterData.facilities.length} cơ sở`;
+        }
+    }
+
+    if (btnSelectAllFacilities) {
+        btnSelectAllFacilities.addEventListener('click', () => {
+            if (state.masterData && state.masterData.facilities) {
+                state.masterData.facilities.forEach(f => state.selectedModalFacilities.add(f));
+                renderModalFacilityChips();
+            }
+        });
+    }
+    if (btnClearFacilities) {
+        btnClearFacilities.addEventListener('click', () => {
+            state.selectedModalFacilities.clear();
+            renderModalFacilityChips();
         });
     }
 
@@ -1090,7 +1502,12 @@ document.addEventListener('DOMContentLoaded', () => {
     btnOpenCreateUserModal.addEventListener('click', () => {
         createUserForm.reset();
         state.selectedModalDepts.clear();
-        deptSearchInput.value = '';
+        state.selectedModalFacilities.clear();
+        if (state.masterData && state.masterData.facilities) {
+            state.selectedModalFacilities.add(state.masterData.facilities[0]);
+        }
+        if (deptSearchInput) deptSearchInput.value = '';
+        renderModalFacilityChips();
         renderModalDeptChips();
         createUserModal.style.display = 'flex';
     });
@@ -1104,10 +1521,18 @@ document.addEventListener('DOMContentLoaded', () => {
     createUserForm.addEventListener('submit', async (e) => {
         e.preventDefault();
 
+        if (state.selectedModalFacilities.size === 0) {
+            showToast('Vui lòng chọn ít nhất 1 cơ sở phụ trách cho tài khoản!', 'error');
+            return;
+        }
+
         if (state.selectedModalDepts.size === 0) {
             showToast('Vui lòng chọn ít nhất 1 chuyên khoa phụ trách cho tài khoản!', 'error');
             return;
         }
+
+        const selectedFacList = Array.from(state.selectedModalFacilities);
+        const facString = selectedFacList.length === state.masterData.facilities.length ? 'ALL' : selectedFacList.join(', ');
 
         const selectedList = Array.from(state.selectedModalDepts);
         const deptString = selectedList.length === state.masterData.departments.length ? 'ALL' : selectedList.join(', ');
@@ -1116,7 +1541,7 @@ document.addEventListener('DOMContentLoaded', () => {
             username: document.getElementById('newUsername').value.trim(),
             password: document.getElementById('newPassword').value,
             full_name: document.getElementById('newFullName').value.trim(),
-            facility: document.getElementById('newFacility').value,
+            facility: facString,
             department: deptString,
             role: document.getElementById('newRole').value
         };
@@ -1139,6 +1564,205 @@ document.addEventListener('DOMContentLoaded', () => {
             showToast('Lỗi máy chủ: ' + err.message, 'error');
         }
     });
+
+    // =========================================================================
+    // FACILITY MANAGEMENT (ADMIN ONLY)
+    // =========================================================================
+    const btnOpenFacilityModal = document.getElementById('btnOpenFacilityModal');
+    const facilityModal = document.getElementById('facilityModal');
+    const btnCloseFacilityModal = document.getElementById('btnCloseFacilityModal');
+    const btnCloseFacilityModalBtn = document.getElementById('btnCloseFacilityModalBtn');
+    const createFacilityForm = document.getElementById('createFacilityForm');
+    const newFacilityName = document.getElementById('newFacilityName');
+    const newFacilityDesc = document.getElementById('newFacilityDesc');
+    const facilitiesTableBody = document.getElementById('facilitiesTableBody');
+
+    if (btnOpenFacilityModal) {
+        btnOpenFacilityModal.addEventListener('click', () => {
+            facilityModal.style.display = 'flex';
+            loadFacilitiesList();
+        });
+    }
+
+    if (btnCloseFacilityModal) {
+        btnCloseFacilityModal.addEventListener('click', () => {
+            facilityModal.style.display = 'none';
+        });
+    }
+
+    if (btnCloseFacilityModalBtn) {
+        btnCloseFacilityModalBtn.addEventListener('click', () => {
+            facilityModal.style.display = 'none';
+        });
+    }
+
+    async function loadFacilitiesList() {
+        if (!facilitiesTableBody) return;
+        facilitiesTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #64748B;">Đang tải danh sách cơ sở...</td></tr>';
+
+        try {
+            const res = await apiRequest('/api/facilities');
+            const data = await res.json();
+            if (res.ok && data.facilities) {
+                renderFacilitiesTable(data.facilities);
+            } else {
+                facilitiesTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--danger);">${data.error || 'Lỗi tải cơ sở'}</td></tr>`;
+            }
+        } catch (err) {
+            facilitiesTableBody.innerHTML = `<tr><td colspan="5" style="text-align: center; color: var(--danger);">Lỗi máy chủ: ${err.message}</td></tr>`;
+        }
+    }
+
+    const facilityFormTitle = document.getElementById('facilityFormTitle');
+    const editFacilityId = document.getElementById('editFacilityId');
+    const btnSubmitFacility = document.getElementById('btnSubmitFacility');
+    const btnCancelEditFacility = document.getElementById('btnCancelEditFacility');
+
+    function resetFacilityForm() {
+        if (!createFacilityForm) return;
+        createFacilityForm.reset();
+        if (editFacilityId) editFacilityId.value = '';
+        if (facilityFormTitle) {
+            facilityFormTitle.innerHTML = '<i class="fa-solid fa-circle-plus" style="color: var(--accent-teal);"></i> Thêm Cơ Sở Hoạt Động Mới';
+        }
+        if (btnSubmitFacility) {
+            btnSubmitFacility.innerHTML = '<i class="fa-solid fa-plus"></i> Thêm Cơ Sở';
+        }
+        if (btnCancelEditFacility) {
+            btnCancelEditFacility.style.display = 'none';
+        }
+    }
+
+    if (btnCancelEditFacility) {
+        btnCancelEditFacility.addEventListener('click', resetFacilityForm);
+    }
+
+    function renderFacilitiesTable(facilities) {
+        facilitiesTableBody.innerHTML = '';
+        if (facilities.length === 0) {
+            facilitiesTableBody.innerHTML = '<tr><td colspan="5" style="text-align: center; color: #64748B;">Chưa có cơ sở nào</td></tr>';
+            return;
+        }
+
+        facilities.forEach((fac, idx) => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                <td style="font-weight: 700; text-align: center;">${idx + 1}</td>
+                <td>
+                    <span class="badge badge-info" style="font-size: 12px; font-weight: 700;">${fac.name}</span>
+                </td>
+                <td style="color: #334155;">${fac.description || '<i style="color: #94A3B8;">Chưa có mô tả</i>'}</td>
+                <td style="color: #64748B; font-size: 11px;">${fac.created_at ? fac.created_at.substring(0, 10) : '-'}</td>
+                <td>
+                    <div class="table-actions" style="justify-content: center;">
+                        <button class="btn-action btn-edit-facility" data-id="${fac.id}" data-name="${fac.name}" data-desc="${fac.description || ''}" title="Sửa thông tin cơ sở">
+                            <i class="fa-solid fa-pen-to-square"></i> Sửa
+                        </button>
+                        <button class="btn-action btn-action-danger btn-delete-facility" data-id="${fac.id}" data-name="${fac.name}" title="Xóa cơ sở">
+                            <i class="fa-solid fa-trash-can"></i>
+                        </button>
+                    </div>
+                </td>
+            `;
+            facilitiesTableBody.appendChild(tr);
+        });
+
+        // Add edit handlers
+        facilitiesTableBody.querySelectorAll('.btn-edit-facility').forEach(btn => {
+            btn.addEventListener('click', () => {
+                const facId = btn.dataset.id;
+                const facName = btn.dataset.name;
+                const facDesc = btn.dataset.desc;
+
+                if (editFacilityId) editFacilityId.value = facId;
+                if (newFacilityName) newFacilityName.value = facName;
+                if (newFacilityDesc) newFacilityDesc.value = facDesc;
+                if (facilityFormTitle) {
+                    facilityFormTitle.innerHTML = `<i class="fa-solid fa-pen-to-square" style="color: var(--accent-gold);"></i> Chỉnh Sửa Cơ Sở: <b style="color: var(--accent-teal);">${facName}</b>`;
+                }
+                if (btnSubmitFacility) {
+                    btnSubmitFacility.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Cập Nhật';
+                }
+                if (btnCancelEditFacility) {
+                    btnCancelEditFacility.style.display = 'inline-block';
+                }
+                if (newFacilityName) newFacilityName.focus();
+            });
+        });
+
+        // Add delete handlers
+        facilitiesTableBody.querySelectorAll('.btn-delete-facility').forEach(btn => {
+            btn.addEventListener('click', async () => {
+                const facId = btn.dataset.id;
+                const facName = btn.dataset.name;
+
+                if (!confirm(`Bạn có chắc chắn muốn xóa cơ sở "${facName}"?\nLưu ý: Không thể xóa nếu đã có dữ liệu báo cáo hoặc tài khoản gắn với cơ sở này.`)) {
+                    return;
+                }
+
+                try {
+                    const res = await apiRequest(`/api/facilities/${facId}`, {
+                        method: 'DELETE'
+                    });
+                    const data = await res.json();
+                    if (res.ok) {
+                        showToast(data.message || `Đã xóa cơ sở ${facName}`, 'success');
+                        resetFacilityForm();
+                        loadFacilitiesList();
+                        await fetchMasterData();
+                    } else {
+                        showToast(data.error || 'Lỗi xóa cơ sở', 'error');
+                    }
+                } catch (err) {
+                    showToast('Lỗi máy chủ: ' + err.message, 'error');
+                }
+            });
+        });
+    }
+
+    if (createFacilityForm) {
+        createFacilityForm.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const name = newFacilityName.value.trim();
+            const desc = newFacilityDesc.value.trim();
+            const id = editFacilityId ? editFacilityId.value : '';
+
+            if (!name) {
+                showToast('Vui lòng nhập tên cơ sở!', 'error');
+                return;
+            }
+
+            try {
+                let res;
+                if (id) {
+                    // Update existing facility
+                    res = await apiRequest(`/api/facilities/${id}`, {
+                        method: 'PUT',
+                        body: { name, description: desc }
+                    });
+                } else {
+                    // Create new facility
+                    res = await apiRequest('/api/facilities', {
+                        method: 'POST',
+                        body: { name, description: desc }
+                    });
+                }
+
+                const data = await res.json();
+                if (res.ok) {
+                    showToast(data.message || (id ? 'Đã cập nhật cơ sở thành công!' : 'Đã tạo cơ sở thành công!'), 'success');
+                    resetFacilityForm();
+                    loadFacilitiesList();
+                    await fetchMasterData();
+                    loadDashboardData();
+                } else {
+                    showToast(data.error || 'Lỗi xử lý cơ sở', 'error');
+                }
+            } catch (err) {
+                showToast('Lỗi máy chủ: ' + err.message, 'error');
+            }
+        });
+    }
 
     // Change Password Modal Handlers
     btnOpenChangePass.addEventListener('click', () => {

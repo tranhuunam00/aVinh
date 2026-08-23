@@ -9,6 +9,7 @@ const userRoutes = require('./src/routes/user.routes');
 const reportRoutes = require('./src/routes/report.routes');
 const dashboardRoutes = require('./src/routes/dashboard.routes');
 const exportRoutes = require('./src/routes/export.routes');
+const facilityRoutes = require('./src/routes/facility.routes');
 
 const app = express();
 const PORT = process.env.PORT || 8080;
@@ -25,6 +26,7 @@ app.use(express.static(path.join(__dirname, 'public')));
 // API Routes
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/facilities', facilityRoutes);
 app.use('/api/reports', reportRoutes);
 app.use('/api/dashboard', dashboardRoutes);
 app.use('/api/export', exportRoutes);

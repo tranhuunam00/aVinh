@@ -5,8 +5,32 @@ const { requireAuth } = require('../middleware/auth');
 const MASTER_DATA = require('../config/masterData');
 
 // GET /api/reports/master-data (Public for app bootstrap)
-router.get('/master-data', (req, res) => {
-    return res.json(MASTER_DATA);
+router.get('/master-data', async (req, res) => {
+    try {
+        const facilityRows = await all("SELECT name, description FROM facilities ORDER BY id ASC");
+        const dynamicFacilities = facilityRows.length ? facilityRows.map(f => f.name) : MASTER_DATA.facilities;
+        const facilityDetails = {
+            'Bệnh viện': 'Bệnh Viện Đa Khoa Quốc Tế Vinmec Ocean Park 2',
+            'PK OCP1': 'Phòng Khám Đa Khoa Quốc Tế Vinmec Ocean Park 1',
+            'PK OCP2': 'Phòng Khám Đa Khoa Quốc Tế Vinmec Ocean Park 2',
+            'ALL': 'Toàn Viện (Tất Cả Các Cơ Sở Bệnh Viện & Phòng Khám)'
+        };
+        facilityRows.forEach(f => {
+            if (f.description && f.description.trim()) {
+                facilityDetails[f.name] = f.description.trim();
+            } else if (!facilityDetails[f.name]) {
+                facilityDetails[f.name] = f.name;
+            }
+        });
+
+        return res.json({
+            ...MASTER_DATA,
+            facilities: dynamicFacilities,
+            facility_details: facilityDetails
+        });
+    } catch (err) {
+        return res.json(MASTER_DATA);
+    }
 });
 
 // All subsequent routes require login
@@ -31,17 +55,28 @@ router.get('/', async (req, res) => {
             params.append ? params.append(date) : params.push(date);
         }
 
-        if (facility && facility !== 'ALL') {
+        if (req.user.role !== 'admin' && req.user.facility !== 'ALL') {
+            const userFacilities = req.user.facility.split(',').map(s => s.trim()).filter(Boolean);
+            if (facility && facility !== 'ALL') {
+                if (userFacilities.includes(facility)) {
+                    query += " AND r.facility = ?";
+                    params.push(facility);
+                } else {
+                    query += " AND 1=0";
+                }
+            } else {
+                const placeholders = userFacilities.map(() => '?').join(',');
+                query += ` AND r.facility IN (${placeholders})`;
+                params.push(...userFacilities);
+            }
+        } else if (facility && facility !== 'ALL') {
             query += " AND r.facility = ?";
             params.push(facility);
-        } else if (req.user.role !== 'admin' && req.user.facility !== 'ALL') {
-            query += " AND r.facility = ?";
-            params.push(req.user.facility);
         }
 
         // If department user, enforce their allowed departments
         if (req.user.role !== 'admin' && req.user.department !== 'ALL') {
-            const userDepts = req.user.department.split(',').map(s => s.trim());
+            const userDepts = req.user.department.split(',').map(s => s.trim()).filter(Boolean);
             if (department && department !== 'ALL') {
                 if (userDepts.includes(department)) {
                     query += " AND r.department = ?";
@@ -94,7 +129,7 @@ router.post('/', async (req, res) => {
 
         // Security check: Department user can only submit for their assigned departments
         if (req.user.role !== 'admin' && req.user.department !== 'ALL') {
-            const allowedDepts = req.user.department.split(',').map(s => s.trim());
+            const allowedDepts = req.user.department.split(',').map(s => s.trim()).filter(Boolean);
             if (!allowedDepts.includes(department)) {
                 return res.status(403).json({
                     error: `Bạn chỉ có quyền nộp báo cáo cho các khoa được gán (${req.user.department}), không thể nộp cho "${department}"!`
@@ -102,11 +137,12 @@ router.post('/', async (req, res) => {
             }
         }
 
-        // Security check: Facility check
+        // Security check: Facility check (Multi-Facility support)
         if (req.user.role !== 'admin' && req.user.facility !== 'ALL') {
-            if (req.user.facility !== facility) {
+            const allowedFacilities = req.user.facility.split(',').map(s => s.trim()).filter(Boolean);
+            if (!allowedFacilities.includes(facility)) {
                 return res.status(403).json({
-                    error: `Bạn chỉ có quyền nộp báo cáo cho cơ sở "${req.user.facility}", không thể nộp cho "${facility}"!`
+                    error: `Bạn chỉ có quyền nộp báo cáo cho các cơ sở được gán (${req.user.facility}), không thể nộp cho cơ sở "${facility}"!`
                 });
             }
         }

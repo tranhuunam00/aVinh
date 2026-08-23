@@ -63,11 +63,11 @@ router.post('/', async (req, res) => {
     }
 });
 
-// PUT /api/users/:id - Update user details
+// PUT /api/users/:id - Update user details & role & optional new password
 router.put('/:id', async (req, res) => {
     try {
         const userId = parseInt(req.params.id);
-        const { full_name, facility, department, is_active } = req.body;
+        const { full_name, facility, department, role, is_active, new_password } = req.body;
 
         const targetUser = await get("SELECT * FROM users WHERE id = ?", [userId]);
         if (!targetUser) {
@@ -75,20 +75,36 @@ router.put('/:id', async (req, res) => {
         }
 
         const now = new Date().toISOString();
+        let passHash = targetUser.password_hash;
+        if (new_password && new_password.trim().length >= 6) {
+            const salt = bcrypt.genSaltSync(10);
+            passHash = bcrypt.hashSync(new_password.trim(), salt);
+        } else if (new_password && new_password.trim().length > 0 && new_password.trim().length < 6) {
+            return res.status(400).json({ error: 'Mật khẩu mới nếu đổi phải có tối thiểu 6 ký tự!' });
+        }
+
+        // Do not demote default admin
+        let userRole = targetUser.role;
+        if (role && targetUser.username !== 'admin') {
+            userRole = role;
+        }
+
         await run(`
             UPDATE users
-            SET full_name = ?, facility = ?, department = ?, is_active = ?, updated_at = ?
+            SET full_name = ?, facility = ?, department = ?, role = ?, password_hash = ?, is_active = ?, updated_at = ?
             WHERE id = ?
         `, [
-            full_name !== undefined ? full_name : targetUser.full_name,
+            full_name !== undefined ? full_name.trim() : targetUser.full_name,
             facility !== undefined ? facility : targetUser.facility,
             department !== undefined ? department : targetUser.department,
+            userRole,
+            passHash,
             is_active !== undefined ? is_active : targetUser.is_active,
             now,
             userId
         ]);
 
-        return res.json({ success: true, message: 'Đã cập nhật thông tin tài khoản thành công!' });
+        return res.json({ success: true, message: `Đã cập nhật thông tin tài khoản "${targetUser.username}" thành công!` });
     } catch (err) {
         return res.status(500).json({ error: err.message });
     }

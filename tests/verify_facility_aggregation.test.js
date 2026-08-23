@@ -34,135 +34,113 @@ async function verifyFacilityAggregation() {
     const dataAll = await resAll.json();
     const sumAll = dataAll.summary;
 
-    // 3. Fetch Dashboard for 'Bệnh viện'
-    const resBV = await fetch(`${BASE_URL}/api/dashboard?date=${targetDate}&facility=${encodeURIComponent('Bệnh viện')}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-    });
-    const dataBV = await resBV.json();
-    const sumBV = dataBV.summary;
+    // 3. Dynamically fetch all facilities from database
+    const facRes = await fetch(`${BASE_URL}/api/facilities`);
+    const facData = await facRes.json();
+    const facilityList = facData.facilities.map(f => f.name);
 
-    // 4. Fetch Dashboard for 'PK OCP1'
-    const resOCP1 = await fetch(`${BASE_URL}/api/dashboard?date=${targetDate}&facility=${encodeURIComponent('PK OCP1')}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-    });
-    const dataOCP1 = await resOCP1.json();
-    const sumOCP1 = dataOCP1.summary;
+    console.log(`Đang kiểm tra tổng hợp cho ${facilityList.length} cơ sở:`, facilityList);
 
-    // 5. Fetch Dashboard for 'PK OCP2'
-    const resOCP2 = await fetch(`${BASE_URL}/api/dashboard?date=${targetDate}&facility=${encodeURIComponent('PK OCP2')}`, {
-        headers: { 'Authorization': `Bearer ${token}` }
-    });
-    const dataOCP2 = await resOCP2.json();
-    const sumOCP2 = dataOCP2.summary;
+    const facilitySummaries = [];
+    for (const fac of facilityList) {
+        const res = await fetch(`${BASE_URL}/api/dashboard?date=${targetDate}&facility=${encodeURIComponent(fac)}`, {
+            headers: { 'Authorization': `Bearer ${token}` }
+        });
+        const data = await res.json();
+        facilitySummaries.push({ name: fac, summary: data.summary });
+    }
 
-    console.log(`📊 BẢNG SO SÁNH TỔNG HỢP THEO TỪNG CƠ SỞ NGÀY ${targetDate}:\n`);
+    const aggregated = {
+        total_kham: facilitySummaries.reduce((a, c) => a + c.summary.total_kham, 0),
+        total_cap_cuu: facilitySummaries.reduce((a, c) => a + c.summary.total_cap_cuu, 0),
+        total_vao_vien: facilitySummaries.reduce((a, c) => a + c.summary.total_vao_vien, 0),
+        total_phau_thuat: facilitySummaries.reduce((a, c) => a + c.summary.total_phau_thuat, 0),
+        total_thu_thuat: facilitySummaries.reduce((a, c) => a + c.summary.total_thu_thuat, 0),
+        total_xet_nghiem: facilitySummaries.reduce((a, c) => a + c.summary.total_xet_nghiem, 0),
+        total_cdha: facilitySummaries.reduce((a, c) => a + c.summary.total_cdha, 0),
+        total_dqct: facilitySummaries.reduce((a, c) => a + c.summary.total_dqct, 0),
+        total_ra_vien: facilitySummaries.reduce((a, c) => a + c.summary.total_ra_vien, 0),
+        total_chuyen_vien: facilitySummaries.reduce((a, c) => a + c.summary.total_chuyen_vien, 0),
+    };
+
+    console.log(`\n📊 BẢNG SO SÁNH TỔNG HỢP THEO TỪNG CƠ SỞ NGÀY ${targetDate}:\n`);
 
     const comparisonTable = [
         {
             'Chỉ Số KPI': '1. Tổng Lượt Khám',
-            'Bệnh Viện': sumBV.total_kham,
-            'PK OCP1': sumOCP1.total_kham,
-            'PK OCP2': sumOCP2.total_kham,
-            'Tổng (BV + OCP1 + OCP2)': sumBV.total_kham + sumOCP1.total_kham + sumOCP2.total_kham,
+            'Tổng Từng Cơ Sở': aggregated.total_kham,
             'Tất Cả Cơ Sở (ALL)': sumAll.total_kham,
-            'Khớp 100%': (sumBV.total_kham + sumOCP1.total_kham + sumOCP2.total_kham === sumAll.total_kham) ? '✅ KHỚP' : '❌ LỆCH'
+            'Khớp 100%': (aggregated.total_kham === sumAll.total_kham) ? '✅ KHỚP' : '❌ LỆCH'
         },
         {
             'Chỉ Số KPI': '2. Khám Cấp Cứu',
-            'Bệnh Viện': sumBV.total_cap_cuu,
-            'PK OCP1': sumOCP1.total_cap_cuu,
-            'PK OCP2': sumOCP2.total_cap_cuu,
-            'Tổng (BV + OCP1 + OCP2)': sumBV.total_cap_cuu + sumOCP1.total_cap_cuu + sumOCP2.total_cap_cuu,
+            'Tổng Từng Cơ Sở': aggregated.total_cap_cuu,
             'Tất Cả Cơ Sở (ALL)': sumAll.total_cap_cuu,
-            'Khớp 100%': (sumBV.total_cap_cuu + sumOCP1.total_cap_cuu + sumOCP2.total_cap_cuu === sumAll.total_cap_cuu) ? '✅ KHỚP' : '❌ LỆCH'
+            'Khớp 100%': (aggregated.total_cap_cuu === sumAll.total_cap_cuu) ? '✅ KHỚP' : '❌ LỆCH'
         },
         {
             'Chỉ Số KPI': '3. Vào Viện',
-            'Bệnh Viện': sumBV.total_vao_vien,
-            'PK OCP1': sumOCP1.total_vao_vien,
-            'PK OCP2': sumOCP2.total_vao_vien,
-            'Tổng (BV + OCP1 + OCP2)': sumBV.total_vao_vien + sumOCP1.total_vao_vien + sumOCP2.total_vao_vien,
+            'Tổng Từng Cơ Sở': aggregated.total_vao_vien,
             'Tất Cả Cơ Sở (ALL)': sumAll.total_vao_vien,
-            'Khớp 100%': (sumBV.total_vao_vien + sumOCP1.total_vao_vien + sumOCP2.total_vao_vien === sumAll.total_vao_vien) ? '✅ KHỚP' : '❌ LỆCH'
+            'Khớp 100%': (aggregated.total_vao_vien === sumAll.total_vao_vien) ? '✅ KHỚP' : '❌ LỆCH'
         },
         {
             'Chỉ Số KPI': '4. Phẫu Thuật (Mổ)',
-            'Bệnh Viện': sumBV.total_phau_thuat,
-            'PK OCP1': sumOCP1.total_phau_thuat,
-            'PK OCP2': sumOCP2.total_phau_thuat,
-            'Tổng (BV + OCP1 + OCP2)': sumBV.total_phau_thuat + sumOCP1.total_phau_thuat + sumOCP2.total_phau_thuat,
+            'Tổng Từng Cơ Sở': aggregated.total_phau_thuat,
             'Tất Cả Cơ Sở (ALL)': sumAll.total_phau_thuat,
-            'Khớp 100%': (sumBV.total_phau_thuat + sumOCP1.total_phau_thuat + sumOCP2.total_phau_thuat === sumAll.total_phau_thuat) ? '✅ KHỚP' : '❌ LỆCH'
+            'Khớp 100%': (aggregated.total_phau_thuat === sumAll.total_phau_thuat) ? '✅ KHỚP' : '❌ LỆCH'
         },
         {
             'Chỉ Số KPI': '4b. Thủ Thuật',
-            'Bệnh Viện': sumBV.total_thu_thuat,
-            'PK OCP1': sumOCP1.total_thu_thuat,
-            'PK OCP2': sumOCP2.total_thu_thuat,
-            'Tổng (BV + OCP1 + OCP2)': sumBV.total_thu_thuat + sumOCP1.total_thu_thuat + sumOCP2.total_thu_thuat,
+            'Tổng Từng Cơ Sở': aggregated.total_thu_thuat,
             'Tất Cả Cơ Sở (ALL)': sumAll.total_thu_thuat,
-            'Khớp 100%': (sumBV.total_thu_thuat + sumOCP1.total_thu_thuat + sumOCP2.total_thu_thuat === sumAll.total_thu_thuat) ? '✅ KHỚP' : '❌ LỆCH'
+            'Khớp 100%': (aggregated.total_thu_thuat === sumAll.total_thu_thuat) ? '✅ KHỚP' : '❌ LỆCH'
         },
         {
             'Chỉ Số KPI': '5. Xét Nghiệm',
-            'Bệnh Viện': sumBV.total_xet_nghiem,
-            'PK OCP1': sumOCP1.total_xet_nghiem,
-            'PK OCP2': sumOCP2.total_xet_nghiem,
-            'Tổng (BV + OCP1 + OCP2)': sumBV.total_xet_nghiem + sumOCP1.total_xet_nghiem + sumOCP2.total_xet_nghiem,
+            'Tổng Từng Cơ Sở': aggregated.total_xet_nghiem,
             'Tất Cả Cơ Sở (ALL)': sumAll.total_xet_nghiem,
-            'Khớp 100%': (sumBV.total_xet_nghiem + sumOCP1.total_xet_nghiem + sumOCP2.total_xet_nghiem === sumAll.total_xet_nghiem) ? '✅ KHỚP' : '❌ LỆCH'
+            'Khớp 100%': (aggregated.total_xet_nghiem === sumAll.total_xet_nghiem) ? '✅ KHỚP' : '❌ LỆCH'
         },
         {
             'Chỉ Số KPI': '5b. Chẩn Đoán Hình Ảnh',
-            'Bệnh Viện': sumBV.total_cdha,
-            'PK OCP1': sumOCP1.total_cdha,
-            'PK OCP2': sumOCP2.total_cdha,
-            'Tổng (BV + OCP1 + OCP2)': sumBV.total_cdha + sumOCP1.total_cdha + sumOCP2.total_cdha,
+            'Tổng Từng Cơ Sở': aggregated.total_cdha,
             'Tất Cả Cơ Sở (ALL)': sumAll.total_cdha,
-            'Khớp 100%': (sumBV.total_cdha + sumOCP1.total_cdha + sumOCP2.total_cdha === sumAll.total_cdha) ? '✅ KHỚP' : '❌ LỆCH'
+            'Khớp 100%': (aggregated.total_cdha === sumAll.total_cdha) ? '✅ KHỚP' : '❌ LỆCH'
         },
         {
             'Chỉ Số KPI': '5c. Điện Quang Can Thiệp',
-            'Bệnh Viện': sumBV.total_dqct,
-            'PK OCP1': sumOCP1.total_dqct,
-            'PK OCP2': sumOCP2.total_dqct,
-            'Tổng (BV + OCP1 + OCP2)': sumBV.total_dqct + sumOCP1.total_dqct + sumOCP2.total_dqct,
+            'Tổng Từng Cơ Sở': aggregated.total_dqct,
             'Tất Cả Cơ Sở (ALL)': sumAll.total_dqct,
-            'Khớp 100%': (sumBV.total_dqct + sumOCP1.total_dqct + sumOCP2.total_dqct === sumAll.total_dqct) ? '✅ KHỚP' : '❌ LỆCH'
+            'Khớp 100%': (aggregated.total_dqct === sumAll.total_dqct) ? '✅ KHỚP' : '❌ LỆCH'
         },
         {
             'Chỉ Số KPI': '6. Ra Viện',
-            'Bệnh Viện': sumBV.total_ra_vien,
-            'PK OCP1': sumOCP1.total_ra_vien,
-            'PK OCP2': sumOCP2.total_ra_vien,
-            'Tổng (BV + OCP1 + OCP2)': sumBV.total_ra_vien + sumOCP1.total_ra_vien + sumOCP2.total_ra_vien,
+            'Tổng Từng Cơ Sở': aggregated.total_ra_vien,
             'Tất Cả Cơ Sở (ALL)': sumAll.total_ra_vien,
-            'Khớp 100%': (sumBV.total_ra_vien + sumOCP1.total_ra_vien + sumOCP2.total_ra_vien === sumAll.total_ra_vien) ? '✅ KHỚP' : '❌ LỆCH'
+            'Khớp 100%': (aggregated.total_ra_vien === sumAll.total_ra_vien) ? '✅ KHỚP' : '❌ LỆCH'
         },
         {
             'Chỉ Số KPI': '6b. Chuyển Viện',
-            'Bệnh Viện': sumBV.total_chuyen_vien,
-            'PK OCP1': sumOCP1.total_chuyen_vien,
-            'PK OCP2': sumOCP2.total_chuyen_vien,
-            'Tổng (BV + OCP1 + OCP2)': sumBV.total_chuyen_vien + sumOCP1.total_chuyen_vien + sumOCP2.total_chuyen_vien,
+            'Tổng Từng Cơ Sở': aggregated.total_chuyen_vien,
             'Tất Cả Cơ Sở (ALL)': sumAll.total_chuyen_vien,
-            'Khớp 100%': (sumBV.total_chuyen_vien + sumOCP1.total_chuyen_vien + sumOCP2.total_chuyen_vien === sumAll.total_chuyen_vien) ? '✅ KHỚP' : '❌ LỆCH'
+            'Khớp 100%': (aggregated.total_chuyen_vien === sumAll.total_chuyen_vien) ? '✅ KHỚP' : '❌ LỆCH'
         }
     ];
 
     console.table(comparisonTable);
 
     // Strict Mathematical Assertions:
-    assert.strictEqual(sumBV.total_kham + sumOCP1.total_kham + sumOCP2.total_kham, sumAll.total_kham);
-    assert.strictEqual(sumBV.total_cap_cuu + sumOCP1.total_cap_cuu + sumOCP2.total_cap_cuu, sumAll.total_cap_cuu);
-    assert.strictEqual(sumBV.total_vao_vien + sumOCP1.total_vao_vien + sumOCP2.total_vao_vien, sumAll.total_vao_vien);
-    assert.strictEqual(sumBV.total_phau_thuat + sumOCP1.total_phau_thuat + sumOCP2.total_phau_thuat, sumAll.total_phau_thuat);
-    assert.strictEqual(sumBV.total_thu_thuat + sumOCP1.total_thu_thuat + sumOCP2.total_thu_thuat, sumAll.total_thu_thuat);
-    assert.strictEqual(sumBV.total_xet_nghiem + sumOCP1.total_xet_nghiem + sumOCP2.total_xet_nghiem, sumAll.total_xet_nghiem);
-    assert.strictEqual(sumBV.total_cdha + sumOCP1.total_cdha + sumOCP2.total_cdha, sumAll.total_cdha);
-    assert.strictEqual(sumBV.total_dqct + sumOCP1.total_dqct + sumOCP2.total_dqct, sumAll.total_dqct);
-    assert.strictEqual(sumBV.total_ra_vien + sumOCP1.total_ra_vien + sumOCP2.total_ra_vien, sumAll.total_ra_vien);
-    assert.strictEqual(sumBV.total_chuyen_vien + sumOCP1.total_chuyen_vien + sumOCP2.total_chuyen_vien, sumAll.total_chuyen_vien);
+    assert.strictEqual(aggregated.total_kham, sumAll.total_kham);
+    assert.strictEqual(aggregated.total_cap_cuu, sumAll.total_cap_cuu);
+    assert.strictEqual(aggregated.total_vao_vien, sumAll.total_vao_vien);
+    assert.strictEqual(aggregated.total_phau_thuat, sumAll.total_phau_thuat);
+    assert.strictEqual(aggregated.total_thu_thuat, sumAll.total_thu_thuat);
+    assert.strictEqual(aggregated.total_xet_nghiem, sumAll.total_xet_nghiem);
+    assert.strictEqual(aggregated.total_cdha, sumAll.total_cdha);
+    assert.strictEqual(aggregated.total_dqct, sumAll.total_dqct);
+    assert.strictEqual(aggregated.total_ra_vien, sumAll.total_ra_vien);
+    assert.strictEqual(aggregated.total_chuyen_vien, sumAll.total_chuyen_vien);
 
     console.log('\n========================================================================================');
     console.log('  🎉 TẤT CẢ 10/10 CHỈ SỐ: ALL = BỆNH VIỆN + PK OCP1 + PK OCP2 KHỚP TOÁN HỌC 100%!');

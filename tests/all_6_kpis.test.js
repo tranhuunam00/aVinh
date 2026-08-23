@@ -19,7 +19,7 @@ async function verifyAll6KPIs() {
     console.log('========================================================================================\n');
 
     const targetDate = '2026-08-23';
-    const rows = await all("SELECT department, facility, data_json FROM daily_reports WHERE report_date = ?", [targetDate]);
+    const rows = await all("SELECT department, facility, data_json FROM daily_reports WHERE report_date = ? AND facility LIKE 'Bệnh viện%'", [targetDate]);
 
     console.log(`Đọc thành công dữ liệu ${rows.length} khoa đã nộp báo cáo trong ngày:\n`);
 
