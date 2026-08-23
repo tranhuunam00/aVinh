@@ -94,19 +94,20 @@ async function initDatabase() {
         )
     `);
 
-    // Seed default facilities if empty
-    const facilityCount = await get("SELECT COUNT(*) as count FROM facilities");
-    if (facilityCount.count === 0) {
-        const now = new Date().toISOString();
-        const defaultFacilities = [
-            { name: 'Bệnh viện', desc: 'Bệnh viện Đa Khoa Quốc Tế Vinmec Ocean Park 2' },
-            { name: 'PK OCP1', desc: 'Phòng khám Vinmec Ocean Park 1' },
-            { name: 'PK OCP2', desc: 'Phòng khám Vinmec Ocean Park 2' }
-        ];
-        for (const f of defaultFacilities) {
-            await run("INSERT INTO facilities (name, description, created_at) VALUES (?, ?, ?)", [f.name, f.desc, now]);
-        }
-        console.log('🏥 Đã khởi tạo 3 cơ sở mặc định: Bệnh viện, PK OCP1, PK OCP2');
+    // Clean temporary/obsolete facilities (e.g. cs3, Bệnh viện c)
+    await run("DELETE FROM facilities WHERE name IN ('cs3', 'Bệnh viện c')");
+    await run("UPDATE daily_reports SET facility = 'Bệnh viện' WHERE facility IN ('cs3', 'Bệnh viện c')");
+    await run("UPDATE users SET facility = 'Bệnh viện' WHERE facility IN ('cs3', 'Bệnh viện c')");
+
+    // Ensure 3 standard facilities always exist
+    const now = new Date().toISOString();
+    const defaultFacilities = [
+        { name: 'Bệnh viện', desc: 'Bệnh viện Đa Khoa Quốc Tế Vinmec Ocean Park 2' },
+        { name: 'PK OCP1', desc: 'Phòng khám Đa Khoa Quốc Tế Vinmec Ocean Park 1' },
+        { name: 'PK OCP2', desc: 'Phòng khám Đa Khoa Quốc Tế Vinmec Ocean Park 2' }
+    ];
+    for (const f of defaultFacilities) {
+        await run("INSERT OR IGNORE INTO facilities (name, description, created_at) VALUES (?, ?, ?)", [f.name, f.desc, now]);
     }
 
     // 5. Seed Super Admin (1 Admin duy nhất ban đầu)
@@ -114,7 +115,6 @@ async function initDatabase() {
     if (!existingAdmin) {
         const salt = bcrypt.genSaltSync(10);
         const adminHash = bcrypt.hashSync('Vinmec@2026', salt);
-        const now = new Date().toISOString();
         
         await run(`
             INSERT INTO users (username, password_hash, full_name, role, facility, department, is_active, created_at, updated_at)
@@ -147,7 +147,6 @@ async function initDatabase() {
 
     const salt = bcrypt.genSaltSync(10);
     const defaultDeptPassHash = bcrypt.hashSync('Vinmec@2026', salt);
-    const now = new Date().toISOString();
 
     for (const d of officialDeptAccounts) {
         const existingUser = await get("SELECT id FROM users WHERE username = ?", [d.username]);

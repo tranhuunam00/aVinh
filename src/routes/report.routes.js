@@ -157,6 +157,13 @@ router.post('/', async (req, res) => {
         `, [report_date, facility, department]);
 
         if (existing) {
+            // One submission per day policy: Non-admin users cannot overwrite locked reports
+            if (req.user.role !== 'admin') {
+                return res.status(403).json({
+                    error: `Báo cáo của ${department} ngày ${report_date} tại ${facility} đã được nộp và chốt khóa. Vui lòng liên hệ Quản trị viên Phòng KHTH nếu cần mở khóa điều chỉnh!`
+                });
+            }
+
             await run(`
                 UPDATE daily_reports 
                 SET data_json = ?, submitted_by = ?, updated_at = ?
@@ -165,7 +172,7 @@ router.post('/', async (req, res) => {
 
             return res.json({
                 success: true,
-                message: `Đã cập nhật số liệu ngày ${report_date} cho ${department} (${facility}) thành công!`,
+                message: `[Admin] Đã cập nhật số liệu ngày ${report_date} cho ${department} (${facility}) thành công!`,
                 reportId: existing.id
             });
         } else {
@@ -176,7 +183,7 @@ router.post('/', async (req, res) => {
 
             return res.status(201).json({
                 success: true,
-                message: `Đã lưu mới số liệu ngày ${report_date} cho ${department} (${facility}) thành công!`,
+                message: `Đã nộp thành công số liệu ngày ${report_date} cho ${department} (${facility}) và chốt khóa báo cáo!`,
                 reportId: result.id
             });
         }

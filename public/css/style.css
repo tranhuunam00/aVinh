@@ -1058,7 +1058,59 @@ body {
     align-items: center;
     flex-wrap: wrap;
     gap: 12px;
-    margin-bottom: 16px;
+    margin-bottom: 12px;
+}
+
+.dash-mode-switcher {
+    display: inline-flex;
+    background: #F1F5F9;
+    padding: 3px;
+    border-radius: var(--radius-md);
+    border: 1px solid #CBD5E1;
+    gap: 2px;
+}
+
+.dash-mode-btn {
+    border: none;
+    background: transparent;
+    padding: 6px 14px;
+    border-radius: 6px;
+    font-size: 12px;
+    font-weight: 700;
+    color: #475569;
+    cursor: pointer;
+    transition: var(--transition);
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    font-family: inherit;
+}
+
+.dash-mode-btn:hover {
+    color: var(--primary);
+    background: rgba(255, 255, 255, 0.6);
+}
+
+.dash-mode-btn.active {
+    background: #0A2540;
+    color: #FFFFFF;
+    box-shadow: 0 2px 6px rgba(10, 37, 64, 0.25);
+}
+
+.dash-period-banner {
+    background: linear-gradient(90deg, #F0F9FF, #F0FDF4);
+    border: 1px solid #BAE6FD;
+    border-radius: var(--radius-md);
+    padding: 8px 14px;
+    margin-bottom: 14px;
+    font-size: 12.5px;
+    font-weight: 700;
+    color: #0369A1;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 8px;
 }
 
 .dash-title-group h2 {
@@ -1080,6 +1132,50 @@ body {
     gap: 6px;
     font-size: 12px;
     font-weight: 600;
+}
+
+.growth-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 3px;
+    padding: 2px 7px;
+    border-radius: 12px;
+    font-size: 11px;
+    font-weight: 800;
+    margin-left: 6px;
+    vertical-align: middle;
+}
+
+.growth-badge.positive {
+    background: #DCFCE7;
+    color: #15803D;
+    border: 1px solid #86EFAC;
+}
+
+.growth-badge.negative {
+    background: #FEE2E2;
+    color: #B91C1C;
+    border: 1px solid #FCA5A5;
+}
+
+.growth-badge.neutral {
+    background: #F1F5F9;
+    color: #64748B;
+    border: 1px solid #CBD5E1;
+}
+
+/* Auto-calculated field in Section 3 */
+.auto-calc-box {
+    background: #F0FDF4 !important;
+    border-color: #86EFAC !important;
+}
+
+.auto-calc-badge {
+    display: inline-block;
+    font-size: 10.5px;
+    font-weight: 700;
+    color: #16A34A;
+    margin-left: 4px;
 }
 
 /* BALANCED KPI GRID: 3 COLUMNS ON DESKTOP */

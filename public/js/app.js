@@ -12,6 +12,7 @@ document.addEventListener('DOMContentLoaded', () => {
         currentReportDate: new Date().toISOString().split('T')[0],
         currentFacility: 'Bệnh viện',
         currentDepartment: 'Cấp cứu',
+        dashMode: 'daily', // 'daily' | 'weekly' | 'monthly'
         charts: {},
         selectedModalDepts: new Set(),
         selectedEditModalDepts: new Set(),
@@ -50,24 +51,28 @@ document.addEventListener('DOMContentLoaded', () => {
     const inputDate = document.getElementById('inputDate');
     const selectFacility = document.getElementById('selectFacility');
     const selectDepartment = document.getElementById('selectDepartment');
-    const deptLockNotice = document.getElementById('deptLockNotice');
     const deptRuleAlert = document.getElementById('deptRuleAlert');
     const deptRuleText = document.getElementById('deptRuleText');
-    const dynamicFieldsContainer = document.getElementById('dynamicFieldsContainer');
     const currentDeptStatus = document.getElementById('currentDeptStatus');
+    const dynamicFieldsContainer = document.getElementById('dynamicFieldsContainer');
     const dailyReportForm = document.getElementById('dailyReportForm');
+    const btnSubmitReport = document.getElementById('btnSubmitReport');
     const btnResetForm = document.getElementById('btnResetForm');
-
-    // Side Progress Elements
     const sideProgressBar = document.getElementById('sideProgressBar');
     const sideProgressBadge = document.getElementById('sideProgressBadge');
     const deptChecklist = document.getElementById('deptChecklist');
-    const btnQuickExport = document.getElementById('btnQuickExport');
 
     // Dashboard Elements
+    const btnModeDaily = document.getElementById('btnModeDaily');
+    const btnModeWeekly = document.getElementById('btnModeWeekly');
+    const btnModeMonthly = document.getElementById('btnModeMonthly');
+    const filterItemDate = document.getElementById('filterItemDate');
+    const filterItemMonth = document.getElementById('filterItemMonth');
     const dashDateFilter = document.getElementById('dashDateFilter');
+    const dashMonthFilter = document.getElementById('dashMonthFilter');
     const dashFacilityFilter = document.getElementById('dashFacilityFilter');
     const btnRefreshDashboard = document.getElementById('btnRefreshDashboard');
+    const dashPeriodBanner = document.getElementById('dashPeriodBanner');
 
     // Data Management Elements
     const tableDateFilter = document.getElementById('tableDateFilter');
@@ -103,6 +108,12 @@ document.addEventListener('DOMContentLoaded', () => {
     const btnSelectCLSDepts = document.getElementById('btnSelectCLSDepts');
     const btnClearDepts = document.getElementById('btnClearDepts');
 
+    // Pre-Save Confirmation Modal
+    const confirmSubmitModal = document.getElementById('confirmSubmitModal');
+    const btnCloseConfirmModal = document.getElementById('btnCloseConfirmModal');
+    const btnCancelConfirm = document.getElementById('btnCancelConfirm');
+    const btnFinalConfirmSubmit = document.getElementById('btnFinalConfirmSubmit');
+
     // Change Password Modal
     const changePasswordModal = document.getElementById('changePasswordModal');
     const btnOpenChangePass = document.getElementById('btnOpenChangePass');
@@ -114,6 +125,9 @@ document.addEventListener('DOMContentLoaded', () => {
     inputDate.value = state.currentReportDate;
     dashDateFilter.value = state.currentReportDate;
     tableDateFilter.value = state.currentReportDate;
+    if (dashMonthFilter) {
+        dashMonthFilter.value = state.currentReportDate.substring(0, 7);
+    }
 
     // Clock Interval
     setInterval(() => {
@@ -497,19 +511,28 @@ document.addEventListener('DOMContentLoaded', () => {
             fieldBox.className = 'field-input-box';
 
             const inputId = `field_${categoryKey}_${slugify(fieldName)}`;
+            const isAutoKhamBenh = (categoryKey === 'dich_vu' && fieldName === 'Khám bệnh');
+            if (isAutoKhamBenh) {
+                fieldBox.classList.add('auto-calc-box');
+            }
+
             fieldBox.innerHTML = `
-                <label for="${inputId}" title="${fieldName}">${fieldName}</label>
+                <label for="${inputId}" title="${fieldName}">
+                    ${fieldName}
+                    ${isAutoKhamBenh ? '<span class="auto-calc-badge"><i class="fa-solid fa-calculator"></i> (Tự tính = ∑ Mục 1)</span>' : ''}
+                </label>
                 <div class="input-stepper-group">
-                    <button type="button" class="stepper-btn stepper-minus" title="Giảm 1">-</button>
+                    ${!isAutoKhamBenh ? '<button type="button" class="stepper-btn stepper-minus" title="Giảm 1">-</button>' : ''}
                     <input type="number" 
                            id="${inputId}" 
                            name="${categoryKey}.${fieldName}" 
-                           class="stepper-input field-num-input" 
+                           class="stepper-input field-num-input ${isAutoKhamBenh ? 'auto-calc-field' : ''}" 
                            min="0" 
                            step="1" 
                            placeholder="0" 
-                           value="0">
-                    <button type="button" class="stepper-btn stepper-plus" title="Tăng 1">+</button>
+                           value="0"
+                           ${isAutoKhamBenh ? 'readonly style="background:#F0FDF4; font-weight:800; color:#166534;"' : ''}>
+                    ${!isAutoKhamBenh ? '<button type="button" class="stepper-btn stepper-plus" title="Tăng 1">+</button>' : ''}
                     <span class="stepper-unit">${unit}</span>
                 </div>
             `;
@@ -518,19 +541,23 @@ document.addEventListener('DOMContentLoaded', () => {
             const btnMinus = fieldBox.querySelector('.stepper-minus');
             const btnPlus = fieldBox.querySelector('.stepper-plus');
 
-            btnMinus.addEventListener('click', () => {
-                let val = parseInt(input.value) || 0;
-                if (val > 0) {
-                    input.value = val - 1;
-                    input.dispatchEvent(new Event('input', { bubbles: true }));
-                }
-            });
+            if (btnMinus) {
+                btnMinus.addEventListener('click', () => {
+                    let val = parseInt(input.value) || 0;
+                    if (val > 0) {
+                        input.value = val - 1;
+                        input.dispatchEvent(new Event('input', { bubbles: true }));
+                    }
+                });
+            }
 
-            btnPlus.addEventListener('click', () => {
-                let val = parseInt(input.value) || 0;
-                input.value = val + 1;
-                input.dispatchEvent(new Event('input', { bubbles: true }));
-            });
+            if (btnPlus) {
+                btnPlus.addEventListener('click', () => {
+                    let val = parseInt(input.value) || 0;
+                    input.value = val + 1;
+                    input.dispatchEvent(new Event('input', { bubbles: true }));
+                });
+            }
 
             input.addEventListener('change', () => {
                 let val = parseInt(input.value) || 0;
@@ -544,6 +571,27 @@ document.addEventListener('DOMContentLoaded', () => {
         card.appendChild(grid);
         dynamicFieldsContainer.appendChild(card);
     }
+
+    // Auto-calculate Mục 3 'Khám bệnh' = sum of all fields in Mục 1 'kham_benh.*'
+    function updateAutoCalculatedKhamBenh() {
+        const khamBenhInputs = dynamicFieldsContainer.querySelectorAll('input[name^="kham_benh."]');
+        let totalKham = 0;
+        khamBenhInputs.forEach(inp => {
+            totalKham += parseInt(inp.value) || 0;
+        });
+
+        const targetDichVuKham = dynamicFieldsContainer.querySelector('input[name="dich_vu.Khám bệnh"]');
+        if (targetDichVuKham) {
+            targetDichVuKham.value = totalKham;
+        }
+    }
+
+    // Attach listener for real-time recalculation of Mục 3 'Khám bệnh'
+    dynamicFieldsContainer.addEventListener('input', (e) => {
+        if (e.target && e.target.name && e.target.name.startsWith('kham_benh.')) {
+            updateAutoCalculatedKhamBenh();
+        }
+    });
 
     function updateDepartmentRuleAlert(dept) {
         let ruleMsg = `Khoa ${dept}: Các trường nhập liệu đã được tùy biến tự động theo đúng danh mục hoạt động.`;
@@ -576,14 +624,46 @@ document.addEventListener('DOMContentLoaded', () => {
             if (res.ok) {
                 const json = await res.json();
                 const reports = json.reports || [];
+                const inputs = dynamicFieldsContainer.querySelectorAll('input.field-num-input');
+                const stepperBtns = dynamicFieldsContainer.querySelectorAll('.stepper-btn');
+
                 if (reports.length > 0) {
-                    currentDeptStatus.textContent = '✓ Đã nộp báo cáo';
-                    currentDeptStatus.classList.add('submitted');
                     fillFormData(reports[0].data);
+
+                    if (state.currentUser && state.currentUser.role !== 'admin') {
+                        // Non-admin user: Report submitted & locked
+                        currentDeptStatus.textContent = '🔒 Đã nộp & Khóa nhập liệu';
+                        currentDeptStatus.className = 'department-status-tag submitted';
+                        btnSubmitReport.disabled = true;
+                        btnSubmitReport.innerHTML = '<i class="fa-solid fa-lock"></i> Đã Nộp & Khóa Nhập Liệu';
+                        btnSubmitReport.title = 'Báo cáo ngày này đã được chốt và khóa. Vui lòng liên hệ Admin nếu cần chỉnh sửa.';
+                        btnResetForm.disabled = true;
+                        
+                        inputs.forEach(i => i.disabled = true);
+                        stepperBtns.forEach(b => b.disabled = true);
+                    } else {
+                        // Admin user: Can edit and update anytime
+                        currentDeptStatus.textContent = '✓ Đã nộp báo cáo (Admin có thể sửa)';
+                        currentDeptStatus.className = 'department-status-tag submitted';
+                        btnSubmitReport.disabled = false;
+                        btnSubmitReport.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Lưu Thay Đổi (Admin)';
+                        btnResetForm.disabled = false;
+                        
+                        inputs.forEach(i => i.disabled = false);
+                        stepperBtns.forEach(b => b.disabled = false);
+                    }
                 } else {
                     currentDeptStatus.textContent = 'Chưa nhập số liệu';
-                    const inputs = dynamicFieldsContainer.querySelectorAll('input.field-num-input');
-                    inputs.forEach(i => i.value = 0);
+                    currentDeptStatus.className = 'department-status-tag';
+                    btnSubmitReport.disabled = false;
+                    btnSubmitReport.innerHTML = '<i class="fa-solid fa-floppy-disk"></i> Lưu Báo Cáo Giao Ban';
+                    btnResetForm.disabled = false;
+                    
+                    inputs.forEach(i => {
+                        i.disabled = false;
+                        i.value = 0;
+                    });
+                    stepperBtns.forEach(b => b.disabled = false);
                 }
             }
         } catch (e) {
@@ -604,7 +684,11 @@ document.addEventListener('DOMContentLoaded', () => {
                 input.value = 0;
             }
         });
+        updateAutoCalculatedKhamBenh();
     }
+
+    // Pending report payload for Pre-Save Confirmation Modal
+    let pendingReportPayload = null;
 
     dailyReportForm.addEventListener('submit', async (e) => {
         e.preventDefault();
@@ -612,6 +696,9 @@ document.addEventListener('DOMContentLoaded', () => {
         const reportDate = inputDate.value;
         const facility = selectFacility.value;
         const department = selectDepartment.value;
+
+        // Auto calculate one last time before building payload
+        updateAutoCalculatedKhamBenh();
 
         const dataObj = {};
         const inputs = dynamicFieldsContainer.querySelectorAll('input.field-num-input');
@@ -623,31 +710,105 @@ document.addEventListener('DOMContentLoaded', () => {
             dataObj[cat][fieldName] = val;
         });
 
-        const payload = {
+        pendingReportPayload = {
             report_date: reportDate,
             facility: facility,
             department: department,
             data: dataObj
         };
 
-        try {
-            const res = await apiRequest('/api/reports', {
-                method: 'POST',
-                body: payload
-            });
-
-            const result = await res.json();
-            if (res.ok) {
-                showToast(`Đã lưu thành công số liệu ngày ${reportDate} cho ${department}!`, 'success');
-                checkCurrentDepartmentStatus();
-                loadDashboardData();
-            } else {
-                showToast(result.error || 'Lỗi khi lưu báo cáo', 'error');
-            }
-        } catch (err) {
-            showToast('Lỗi máy chủ: ' + err.message, 'error');
-        }
+        // Open Confirmation Modal
+        openConfirmSubmitModal(pendingReportPayload);
     });
+
+    function openConfirmSubmitModal(payload) {
+        document.getElementById('confirmDateText').textContent = formatDateDisplay(payload.report_date);
+        document.getElementById('confirmFacilityText').textContent = payload.facility;
+        document.getElementById('confirmDeptText').textContent = payload.department;
+
+        const tableContainer = document.getElementById('confirmSummaryTableContainer');
+        const rows = [];
+
+        Object.entries(payload.data).forEach(([catKey, catData]) => {
+            Object.entries(catData).forEach(([fName, val]) => {
+                if (val > 0) {
+                    rows.push({
+                        category: catKey,
+                        field: fName,
+                        value: val
+                    });
+                }
+            });
+        });
+
+        if (rows.length === 0) {
+            tableContainer.innerHTML = '<div style="padding: 16px; text-align: center; color: #94A3B8; font-size: 13px;">Tất cả chỉ số đều đang là 0 (Báo cáo trống).</div>';
+        } else {
+            let html = `
+                <table class="custom-table" style="font-size: 12px; margin-bottom: 0;">
+                    <thead style="position: sticky; top: 0; background: #F8FAFC; z-index: 1;">
+                        <tr>
+                            <th>Chỉ số</th>
+                            <th style="width: 100px; text-align: right;">Số lượng</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+            `;
+            rows.forEach(r => {
+                html += `
+                    <tr>
+                        <td><b>${r.field}</b></td>
+                        <td style="text-align: right;"><b style="color: #007A87; font-size: 13px;">${r.value.toLocaleString('vi-VN')}</b></td>
+                    </tr>
+                `;
+            });
+            html += '</tbody></table>';
+            tableContainer.innerHTML = html;
+        }
+
+        confirmSubmitModal.style.display = 'flex';
+    }
+
+    if (btnFinalConfirmSubmit) {
+        btnFinalConfirmSubmit.addEventListener('click', async () => {
+            if (!pendingReportPayload) return;
+            btnFinalConfirmSubmit.disabled = true;
+            btnFinalConfirmSubmit.innerHTML = '<i class="fa-solid fa-spinner fa-spin"></i> Đang nộp...';
+
+            try {
+                const res = await apiRequest('/api/reports', {
+                    method: 'POST',
+                    body: pendingReportPayload
+                });
+
+                const result = await res.json();
+                if (res.ok) {
+                    showToast(result.message || `Đã lưu thành công và chốt khóa báo cáo!`, 'success');
+                    confirmSubmitModal.style.display = 'none';
+                    checkCurrentDepartmentStatus();
+                    loadDashboardData();
+                } else {
+                    showToast(result.error || 'Lỗi khi lưu báo cáo', 'error');
+                }
+            } catch (err) {
+                showToast('Lỗi máy chủ: ' + err.message, 'error');
+            } finally {
+                btnFinalConfirmSubmit.disabled = false;
+                btnFinalConfirmSubmit.innerHTML = '<i class="fa-solid fa-circle-check"></i> Xác Nhận & Nộp Báo Cáo';
+            }
+        });
+    }
+
+    if (btnCloseConfirmModal) {
+        btnCloseConfirmModal.addEventListener('click', () => {
+            confirmSubmitModal.style.display = 'none';
+        });
+    }
+    if (btnCancelConfirm) {
+        btnCancelConfirm.addEventListener('click', () => {
+            confirmSubmitModal.style.display = 'none';
+        });
+    }
 
     btnResetForm.addEventListener('click', () => {
         if (confirm('Bạn có chắc chắn muốn đặt lại tất cả ô nhập liệu về 0?')) {
@@ -725,27 +886,126 @@ document.addEventListener('DOMContentLoaded', () => {
     }
 
     // =========================================================================
-    // TAB 2: POWER-BI STYLE DASHBOARD
+    // TAB 2: POWER-BI STYLE DASHBOARD (Daily, Weekly, Monthly Views)
     // =========================================================================
-    async function loadDashboardData() {
-        const dateVal = dashDateFilter.value || inputDate.value;
-        const facVal = dashFacilityFilter.value;
+    if (btnModeDaily) {
+        btnModeDaily.addEventListener('click', () => {
+            state.dashMode = 'daily';
+            updateDashModeUI();
+            loadDashboardData();
+        });
+    }
+    if (btnModeWeekly) {
+        btnModeWeekly.addEventListener('click', () => {
+            state.dashMode = 'weekly';
+            updateDashModeUI();
+            loadDashboardData();
+        });
+    }
+    if (btnModeMonthly) {
+        btnModeMonthly.addEventListener('click', () => {
+            state.dashMode = 'monthly';
+            updateDashModeUI();
+            loadDashboardData();
+        });
+    }
 
-        document.getElementById('dashSubTitle').textContent = `Báo cáo số liệu ngày ${formatDateDisplay(dateVal)} - ${getFacilityFullName(facVal)}`;
+    if (dashMonthFilter) {
+        dashMonthFilter.addEventListener('change', loadDashboardData);
+    }
+    if (dashDateFilter) {
+        dashDateFilter.addEventListener('change', loadDashboardData);
+    }
+    if (dashFacilityFilter) {
+        dashFacilityFilter.addEventListener('change', loadDashboardData);
+    }
 
-        try {
-            const res = await apiRequest(`/api/dashboard?date=${dateVal}&facility=${encodeURIComponent(facVal)}`);
-            if (res.ok) {
-                const data = await res.json();
-                renderDashboardMetrics(data.summary);
-                renderCharts(data.summary);
-            }
-        } catch (e) {
-            console.warn('Dashboard load error:', e);
+    function updateDashModeUI() {
+        const mode = state.dashMode || 'daily';
+        [btnModeDaily, btnModeWeekly, btnModeMonthly].forEach(b => {
+            if (b) b.classList.remove('active');
+        });
+
+        if (mode === 'daily') {
+            if (btnModeDaily) btnModeDaily.classList.add('active');
+            if (filterItemDate) filterItemDate.style.display = 'flex';
+            if (filterItemMonth) filterItemMonth.style.display = 'none';
+            const lbl = document.getElementById('dashDateLabel');
+            if (lbl) lbl.textContent = 'Ngày:';
+        } else if (mode === 'weekly') {
+            if (btnModeWeekly) btnModeWeekly.classList.add('active');
+            if (filterItemDate) filterItemDate.style.display = 'flex';
+            if (filterItemMonth) filterItemMonth.style.display = 'none';
+            const lbl = document.getElementById('dashDateLabel');
+            if (lbl) lbl.textContent = 'Chọn Ngày trong Tuần:';
+        } else if (mode === 'monthly') {
+            if (btnModeMonthly) btnModeMonthly.classList.add('active');
+            if (filterItemDate) filterItemDate.style.display = 'none';
+            if (filterItemMonth) filterItemMonth.style.display = 'flex';
         }
     }
 
-    function renderDashboardMetrics(summary) {
+    async function loadDashboardData() {
+        const facVal = dashFacilityFilter.value;
+        const mode = state.dashMode || 'daily';
+
+        if (mode === 'daily') {
+            const dateVal = dashDateFilter.value || inputDate.value;
+            if (dashPeriodBanner) dashPeriodBanner.style.display = 'none';
+            document.getElementById('dashSubTitle').textContent = `Báo cáo số liệu ngày ${formatDateDisplay(dateVal)} - ${getFacilityFullName(facVal)}`;
+
+            try {
+                const res = await apiRequest(`/api/dashboard?date=${dateVal}&facility=${encodeURIComponent(facVal)}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    renderDashboardMetrics(data.summary, null);
+                    renderCharts(data.summary);
+                }
+            } catch (e) {
+                console.warn('Daily dashboard load error:', e);
+            }
+        } else if (mode === 'weekly') {
+            const dateVal = dashDateFilter.value || inputDate.value;
+            try {
+                const res = await apiRequest(`/api/dashboard/weekly?date=${dateVal}&facility=${encodeURIComponent(facVal)}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (dashPeriodBanner) {
+                        dashPeriodBanner.style.display = 'flex';
+                        document.getElementById('dashPeriodLabel').textContent = `${data.week_range.label}`;
+                        document.getElementById('dashComparisonContextText').textContent = `So sánh với cùng kỳ tuần trước (${formatDateDisplay(data.week_range.prev_start_date)} - ${formatDateDisplay(data.week_range.prev_end_date)})`;
+                    }
+                    document.getElementById('dashSubTitle').textContent = `Báo cáo tổng hợp Tuần (${formatDateDisplay(data.week_range.start_date)} - ${formatDateDisplay(data.week_range.end_date)}) - ${getFacilityFullName(facVal)}`;
+
+                    renderDashboardMetrics(data.summary, data.comparison);
+                    renderWeeklyCharts(data);
+                }
+            } catch (e) {
+                console.warn('Weekly dashboard load error:', e);
+            }
+        } else if (mode === 'monthly') {
+            const monthVal = (dashMonthFilter && dashMonthFilter.value) || state.currentReportDate.substring(0, 7);
+            try {
+                const res = await apiRequest(`/api/dashboard/monthly?month=${monthVal}&facility=${encodeURIComponent(facVal)}`);
+                if (res.ok) {
+                    const data = await res.json();
+                    if (dashPeriodBanner) {
+                        dashPeriodBanner.style.display = 'flex';
+                        document.getElementById('dashPeriodLabel').textContent = `Tổng hợp ${data.month_info.month_label} (${data.month_info.days_in_month} ngày)`;
+                        document.getElementById('dashComparisonContextText').textContent = `So sánh với cùng kỳ ${data.month_info.prev_month_label}`;
+                    }
+                    document.getElementById('dashSubTitle').textContent = `Báo cáo tổng hợp ${data.month_info.month_label} - ${getFacilityFullName(facVal)}`;
+
+                    renderDashboardMetrics(data.summary, data.comparison);
+                    renderMonthlyCharts(data);
+                }
+            } catch (e) {
+                console.warn('Monthly dashboard load error:', e);
+            }
+        }
+    }
+
+    function renderDashboardMetrics(summary, comparison = null) {
         document.getElementById('kpiTotalKham').textContent = (summary.total_kham || 0).toLocaleString('vi-VN');
         document.getElementById('kpiTotalCapCuu').textContent = (summary.total_cap_cuu || 0).toLocaleString('vi-VN');
         document.getElementById('kpiTotalVaoVien').textContent = (summary.total_vao_vien || 0).toLocaleString('vi-VN');
@@ -767,6 +1027,39 @@ document.addEventListener('DOMContentLoaded', () => {
         const nangXinVeEl = document.getElementById('kpiNangXinVeSub');
         if (nangXinVeEl) nangXinVeEl.textContent = summary.total_nang_xin_ve || 0;
         document.getElementById('kpiTuVongSub').textContent = summary.total_tu_vong || 0;
+
+        // Render growth comparison badges
+        renderGrowthBadge('kpiTotalKhamGrowth', comparison ? comparison.total_kham : null);
+        renderGrowthBadge('kpiTotalCapCuuGrowth', comparison ? comparison.total_cap_cuu : null);
+        renderGrowthBadge('kpiTotalVaoVienGrowth', comparison ? comparison.total_vao_vien : null);
+        renderGrowthBadge('kpiTotalPhauThuatGrowth', comparison ? comparison.total_phau_thuat : null);
+        renderGrowthBadge('kpiTotalCLSGrowth', comparison ? comparison.total_xet_nghiem : null);
+        renderGrowthBadge('kpiTotalRaVienGrowth', comparison ? comparison.total_ra_vien : null);
+    }
+
+    function renderGrowthBadge(elId, compItem) {
+        const el = document.getElementById(elId);
+        if (!el) return;
+        if (!compItem || compItem.previous === undefined) {
+            el.style.display = 'none';
+            return;
+        }
+
+        el.style.display = 'inline-flex';
+        const pct = compItem.percent;
+        if (pct > 0) {
+            el.className = 'growth-badge positive';
+            el.innerHTML = `<i class="fa-solid fa-arrow-trend-up"></i> +${pct}%`;
+            el.title = `Tăng ${pct}% (Kỳ này: ${compItem.current.toLocaleString()} vs Kỳ trước: ${compItem.previous.toLocaleString()})`;
+        } else if (pct < 0) {
+            el.className = 'growth-badge negative';
+            el.innerHTML = `<i class="fa-solid fa-arrow-trend-down"></i> ${pct}%`;
+            el.title = `Giảm ${Math.abs(pct)}% (Kỳ này: ${compItem.current.toLocaleString()} vs Kỳ trước: ${compItem.previous.toLocaleString()})`;
+        } else {
+            el.className = 'growth-badge neutral';
+            el.innerHTML = `<i class="fa-solid fa-minus"></i> 0%`;
+            el.title = `Không đổi (${compItem.current.toLocaleString()})`;
+        }
     }
 
     function renderCharts(summary) {
@@ -871,7 +1164,7 @@ document.addEventListener('DOMContentLoaded', () => {
             }
         });
 
-        // 5. Chart Status (Fixed 6 status labels in standardized hospital order)
+        // 5. Chart Status (Fixed 6 status labels)
         const ctxStatus = document.getElementById('chartStatus').getContext('2d');
         const fixedStatusLabels = ['Vào viện', 'Ra viện theo chỉ định', 'Ra viện không theo chỉ định', 'Chuyển viện', 'Nặng xin về', 'Tử vong'];
         const fixedStatusValues = fixedStatusLabels.map(st => (summary.status_detail && summary.status_detail[st]) || 0);
@@ -893,6 +1186,220 @@ document.addEventListener('DOMContentLoaded', () => {
                 plugins: { legend: { display: false } },
                 scales: { y: { beginAtZero: true } }
             }
+        });
+    }
+
+    function renderWeeklyCharts(weeklyData) {
+        Object.values(state.charts).forEach(c => c.destroy());
+        state.charts = {};
+
+        const days = weeklyData.daily_breakdown || [];
+        const dayLabels = days.map(d => d.label);
+        const khamData = days.map(d => d.total_kham);
+        const vaoVienData = days.map(d => d.total_vao_vien);
+
+        // 1. Chart 7-day Khám Trend
+        const ctxKham = document.getElementById('chartDeptKham').getContext('2d');
+        state.charts.kham = new Chart(ctxKham, {
+            type: 'bar',
+            data: {
+                labels: dayLabels,
+                datasets: [{
+                    label: 'Lượt khám trong tuần',
+                    data: khamData,
+                    backgroundColor: '#007A87',
+                    borderRadius: 6
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { display: false } },
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+
+        // 2. Services donut
+        const ctxServices = document.getElementById('chartServices').getContext('2d');
+        const sLabels = Object.keys(weeklyData.summary.service_detail || {});
+        const sValues = Object.values(weeklyData.summary.service_detail || {});
+        state.charts.services = new Chart(ctxServices, {
+            type: 'doughnut',
+            data: {
+                labels: sLabels.length ? sLabels : ['Chưa có dữ liệu'],
+                datasets: [{
+                    data: sValues.length ? sValues : [1],
+                    backgroundColor: ['#0A2540', '#007A87', '#B71234', '#D4AF37', '#7C3AED', '#10B981']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } } }
+            }
+        });
+
+        // 3. CDHA
+        const ctxCDHA = document.getElementById('chartCDHA').getContext('2d');
+        const cdLabels = Object.keys(weeklyData.summary.cdha_detail || {});
+        const cdValues = Object.values(weeklyData.summary.cdha_detail || {});
+        state.charts.cdha = new Chart(ctxCDHA, {
+            type: 'bar',
+            data: {
+                labels: cdLabels.length ? cdLabels : ['Chưa có kỹ thuật'],
+                datasets: [{
+                    label: 'Tổng lượt CDHA trong tuần',
+                    data: cdValues.length ? cdValues : [0],
+                    backgroundColor: '#2563EB',
+                    borderRadius: 4
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+        });
+
+        // 4. XN
+        const ctxXN = document.getElementById('chartXetNghiem').getContext('2d');
+        const xnLabels = Object.keys(weeklyData.summary.xet_nghiem_detail || {});
+        const xnValues = Object.values(weeklyData.summary.xet_nghiem_detail || {});
+        state.charts.xn = new Chart(ctxXN, {
+            type: 'bar',
+            data: {
+                labels: xnLabels.length ? xnLabels : ['Chưa có mẫu'],
+                datasets: [{
+                    label: 'Tổng mẫu XN trong tuần',
+                    data: xnValues.length ? xnValues : [0],
+                    backgroundColor: '#7C3AED',
+                    borderRadius: 4
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+        });
+
+        // 5. 7-Day Inpatient Trend
+        const ctxStatus = document.getElementById('chartStatus').getContext('2d');
+        state.charts.status = new Chart(ctxStatus, {
+            type: 'line',
+            data: {
+                labels: dayLabels,
+                datasets: [{
+                    label: 'Bệnh nhân Vào viện (7 ngày)',
+                    data: vaoVienData,
+                    borderColor: '#10B981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 5
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+        });
+    }
+
+    function renderMonthlyCharts(monthlyData) {
+        Object.values(state.charts).forEach(c => c.destroy());
+        state.charts = {};
+
+        const days = monthlyData.daily_trend || [];
+        const dayLabels = days.map(d => `${d.day}`);
+        const khamData = days.map(d => d.total_kham);
+        const vaoVienData = days.map(d => d.total_vao_vien);
+
+        // 1. Chart Monthly Khám Trend (Line)
+        const ctxKham = document.getElementById('chartDeptKham').getContext('2d');
+        state.charts.kham = new Chart(ctxKham, {
+            type: 'line',
+            data: {
+                labels: dayLabels,
+                datasets: [{
+                    label: 'Lượt khám theo ngày trong tháng',
+                    data: khamData,
+                    borderColor: '#007A87',
+                    backgroundColor: 'rgba(0, 122, 135, 0.1)',
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 3
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                scales: { y: { beginAtZero: true } }
+            }
+        });
+
+        // 2. Services donut
+        const ctxServices = document.getElementById('chartServices').getContext('2d');
+        const sLabels = Object.keys(monthlyData.summary.service_detail || {});
+        const sValues = Object.values(monthlyData.summary.service_detail || {});
+        state.charts.services = new Chart(ctxServices, {
+            type: 'doughnut',
+            data: {
+                labels: sLabels.length ? sLabels : ['Chưa có dữ liệu'],
+                datasets: [{
+                    data: sValues.length ? sValues : [1],
+                    backgroundColor: ['#0A2540', '#007A87', '#B71234', '#D4AF37', '#7C3AED', '#10B981']
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: { legend: { position: 'right', labels: { boxWidth: 12, font: { size: 11 } } } }
+            }
+        });
+
+        // 3. CDHA
+        const ctxCDHA = document.getElementById('chartCDHA').getContext('2d');
+        const cdLabels = Object.keys(monthlyData.summary.cdha_detail || {});
+        const cdValues = Object.values(monthlyData.summary.cdha_detail || {});
+        state.charts.cdha = new Chart(ctxCDHA, {
+            type: 'bar',
+            data: {
+                labels: cdLabels.length ? cdLabels : ['Chưa có kỹ thuật'],
+                datasets: [{
+                    label: 'Lượt thực hiện CĐHA trong tháng',
+                    data: cdValues.length ? cdValues : [0],
+                    backgroundColor: '#2563EB',
+                    borderRadius: 4
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+        });
+
+        // 4. XN
+        const ctxXN = document.getElementById('chartXetNghiem').getContext('2d');
+        const xnLabels = Object.keys(monthlyData.summary.xet_nghiem_detail || {});
+        const xnValues = Object.values(monthlyData.summary.xet_nghiem_detail || {});
+        state.charts.xn = new Chart(ctxXN, {
+            type: 'bar',
+            data: {
+                labels: xnLabels.length ? xnLabels : ['Chưa có mẫu'],
+                datasets: [{
+                    label: 'Số mẫu xét nghiệm trong tháng',
+                    data: xnValues.length ? xnValues : [0],
+                    backgroundColor: '#7C3AED',
+                    borderRadius: 4
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+        });
+
+        // 5. Monthly Admissions Trend (Line)
+        const ctxStatus = document.getElementById('chartStatus').getContext('2d');
+        state.charts.status = new Chart(ctxStatus, {
+            type: 'line',
+            data: {
+                labels: dayLabels,
+                datasets: [{
+                    label: 'Bệnh nhân Vào viện theo ngày trong tháng',
+                    data: vaoVienData,
+                    borderColor: '#10B981',
+                    backgroundColor: 'rgba(16, 185, 129, 0.1)',
+                    fill: true,
+                    tension: 0.3,
+                    pointRadius: 3
+                }]
+            },
+            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
         });
     }
 
