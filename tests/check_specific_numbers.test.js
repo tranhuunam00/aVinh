@@ -62,7 +62,7 @@ async function testSpecificData() {
     console.log('----------------------------------------------------------------\n');
 
     // Assert exact match with calculated sum
-    const bvSum = deptBreakdown.filter(i => i.facility.startsWith('Bệnh viện')).reduce((a, c) => a + c.sum, 0);
+    const bvSum = deptBreakdown.filter(i => i.facility === 'BV VMOCP2' || i.facility.startsWith('Bệnh viện')).reduce((a, c) => a + c.sum, 0);
     assert(bvSum > 0, 'Tổng lượt khám Bệnh viện phải lớn hơn 0');
     assert.strictEqual(totalKhamCalculated, deptBreakdown.reduce((a, c) => a + c.sum, 0), `Tổng ALL phải khớp tổng từng khoa`);
 

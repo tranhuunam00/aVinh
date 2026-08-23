@@ -877,7 +877,7 @@ document.addEventListener('DOMContentLoaded', () => {
         if (state.masterData && state.masterData.facility_details && state.masterData.facility_details[fac]) {
             return state.masterData.facility_details[fac];
         }
-        if (fac === 'Bệnh viện') {
+        if (fac === 'BV VMOCP2' || fac === 'Bệnh viện') {
             return 'Bệnh Viện Đa Khoa Quốc Tế Vinmec Ocean Park 2';
         }
         if (fac === 'PK OCP1') {
@@ -887,6 +887,36 @@ document.addEventListener('DOMContentLoaded', () => {
             return 'Phòng Khám Đa Khoa Quốc Tế Vinmec Ocean Park 2';
         }
         return fac;
+    }
+
+    // Chart.js Plugin: Draw exact values on top of every bar in bar charts
+    const topDataLabelsPlugin = {
+        id: 'topDataLabels',
+        afterDatasetsDraw(chart) {
+            if (chart.config.type !== 'bar') return;
+            const { ctx } = chart;
+            chart.data.datasets.forEach((dataset, datasetIndex) => {
+                const meta = chart.getDatasetMeta(datasetIndex);
+                if (meta && !meta.hidden) {
+                    meta.data.forEach((element, index) => {
+                        const val = dataset.data[index];
+                        if (val !== undefined && val !== null && val > 0) {
+                            ctx.save();
+                            ctx.fillStyle = '#0F172A';
+                            ctx.font = 'bold 11px Inter, sans-serif';
+                            ctx.textAlign = 'center';
+                            ctx.textBaseline = 'bottom';
+                            // Draw number on top of the bar
+                            ctx.fillText(val.toLocaleString('vi-VN'), element.x, element.y - 3);
+                            ctx.restore();
+                        }
+                    });
+                }
+            });
+        }
+    };
+    if (typeof Chart !== 'undefined') {
+        Chart.register(topDataLabelsPlugin);
     }
 
     // =========================================================================
@@ -1158,10 +1188,11 @@ document.addEventListener('DOMContentLoaded', () => {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                layout: { padding: { top: 18 } },
                 plugins: { legend: { display: false } },
                 scales: {
                     x: { grid: { display: false } },
-                    y: { beginAtZero: true, grid: { color: '#F1F5F9' } }
+                    y: { beginAtZero: true, grace: '10%', grid: { color: '#F1F5F9' } }
                 }
             }
         });
@@ -1208,8 +1239,9 @@ document.addEventListener('DOMContentLoaded', () => {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                layout: { padding: { top: 18 } },
                 plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true } }
+                scales: { y: { beginAtZero: true, grace: '10%' } }
             }
         });
 
@@ -1232,8 +1264,9 @@ document.addEventListener('DOMContentLoaded', () => {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                layout: { padding: { top: 18 } },
                 plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true } }
+                scales: { y: { beginAtZero: true, grace: '10%' } }
             }
         });
 
@@ -1256,8 +1289,9 @@ document.addEventListener('DOMContentLoaded', () => {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                layout: { padding: { top: 18 } },
                 plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true } }
+                scales: { y: { beginAtZero: true, grace: '10%' } }
             }
         });
     }
@@ -1287,8 +1321,9 @@ document.addEventListener('DOMContentLoaded', () => {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
+                layout: { padding: { top: 18 } },
                 plugins: { legend: { display: false } },
-                scales: { y: { beginAtZero: true } }
+                scales: { y: { beginAtZero: true, grace: '10%' } }
             }
         });
 
@@ -1327,7 +1362,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     borderRadius: 4
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+            options: { responsive: true, maintainAspectRatio: false, layout: { padding: { top: 18 } }, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grace: '10%' } } }
         });
 
         // 4. XN
@@ -1345,7 +1380,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     borderRadius: 4
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+            options: { responsive: true, maintainAspectRatio: false, layout: { padding: { top: 18 } }, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grace: '10%' } } }
         });
 
         // 5. 7-Day Inpatient Trend
@@ -1364,7 +1399,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     pointRadius: 5
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+            options: { responsive: true, maintainAspectRatio: false, layout: { padding: { top: 18 } }, scales: { y: { beginAtZero: true, grace: '10%' } } }
         });
     }
 
@@ -1396,7 +1431,8 @@ document.addEventListener('DOMContentLoaded', () => {
             options: {
                 responsive: true,
                 maintainAspectRatio: false,
-                scales: { y: { beginAtZero: true } }
+                layout: { padding: { top: 18 } },
+                scales: { y: { beginAtZero: true, grace: '10%' } }
             }
         });
 
@@ -1435,7 +1471,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     borderRadius: 4
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+            options: { responsive: true, maintainAspectRatio: false, layout: { padding: { top: 18 } }, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grace: '10%' } } }
         });
 
         // 4. XN
@@ -1453,7 +1489,7 @@ document.addEventListener('DOMContentLoaded', () => {
                     borderRadius: 4
                 }]
             },
-            options: { responsive: true, maintainAspectRatio: false, scales: { y: { beginAtZero: true } } }
+            options: { responsive: true, maintainAspectRatio: false, layout: { padding: { top: 18 } }, plugins: { legend: { display: false } }, scales: { y: { beginAtZero: true, grace: '10%' } } }
         });
 
         // 5. Monthly Admissions Trend (Line)

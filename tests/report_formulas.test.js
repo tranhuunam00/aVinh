@@ -53,7 +53,7 @@ async function runTests() {
     // -------------------------------------------------------------------------
     test('1. Master Data has exact 3 facilities and 17 departments', () => {
         assert.strictEqual(MASTER_DATA.facilities.length, 3, 'Must have 3 facilities');
-        assert.deepStrictEqual(MASTER_DATA.facilities, ['Bệnh viện', 'PK OCP1', 'PK OCP2']);
+        assert.deepStrictEqual(MASTER_DATA.facilities, ['BV VMOCP2', 'PK OCP1', 'PK OCP2']);
         assert.strictEqual(MASTER_DATA.departments.length, 17, 'Must have 17 departments');
         assert(MASTER_DATA.departments.includes('Cấp cứu'));
         assert(MASTER_DATA.departments.includes('Xét nghiệm'));

@@ -15,7 +15,7 @@ async function verifyRemaining3Charts() {
     console.log('========================================================================================\n');
 
     const targetDate = '2026-08-23';
-    const rows = await all("SELECT department, facility, data_json FROM daily_reports WHERE report_date = ? AND facility LIKE 'Bệnh viện%'", [targetDate]);
+    const rows = await all("SELECT department, facility, data_json FROM daily_reports WHERE report_date = ? AND facility IN ('BV VMOCP2', 'Bệnh viện')", [targetDate]);
 
     // -------------------------------------------------------------------------
     // 1. BIỂU ĐỒ 3: CHẨN ĐOÁN HÌNH ẢNH (10 KỸ THUẬT)

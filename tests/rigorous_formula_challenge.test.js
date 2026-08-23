@@ -52,10 +52,10 @@ async function runRigorousAudit() {
     const testDate = '2026-10-15';
     await run("DELETE FROM daily_reports WHERE report_date = ?", [testDate]);
 
-    // Insert 'Cấp cứu' from Bệnh viện AND 'Cấp cứu' from PK OCP1
+    // Insert 'Cấp cứu' from BV VMOCP2 AND 'Cấp cứu' from PK OCP1
     await run(`
         INSERT INTO daily_reports (report_date, facility, department, submitted_by, data_json, created_at, updated_at)
-        VALUES (?, 'Bệnh viện', 'Cấp cứu', 1, '{"kham_benh":{"Khám cấp cứu":20}}', datetime('now'), datetime('now'))
+        VALUES (?, 'BV VMOCP2', 'Cấp cứu', 1, '{"kham_benh":{"Khám cấp cứu":20}}', datetime('now'), datetime('now'))
     `, [testDate]);
 
     await run(`
@@ -63,7 +63,7 @@ async function runRigorousAudit() {
         VALUES (?, 'PK OCP1', 'Cấp cứu', 1, '{"kham_benh":{"Khám cấp cứu":15}}', datetime('now'), datetime('now'))
     `, [testDate]);
 
-    const bvRows = await all("SELECT * FROM daily_reports WHERE report_date = ? AND facility = 'Bệnh viện'", [testDate]);
+    const bvRows = await all("SELECT * FROM daily_reports WHERE report_date = ? AND facility = 'BV VMOCP2'", [testDate]);
     const ocpRows = await all("SELECT * FROM daily_reports WHERE report_date = ? AND facility = 'PK OCP1'", [testDate]);
     const allRows = await all("SELECT * FROM daily_reports WHERE report_date = ?", [testDate]);
 

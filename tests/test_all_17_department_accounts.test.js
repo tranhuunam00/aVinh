@@ -81,7 +81,7 @@ async function runTest() {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sanToken}` },
         body: JSON.stringify({
             report_date: '2026-12-31',
-            facility: 'Bệnh viện',
+            facility: 'BV VMOCP2',
             department: 'Cấp cứu', // Unauthorized department for baocao_san!
             data: { kham_benh: { "Khám cấp cứu": 99 } }
         })
@@ -95,7 +95,7 @@ async function runTest() {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${sanToken}` },
         body: JSON.stringify({
             report_date: '2026-12-31',
-            facility: 'Bệnh viện',
+            facility: 'BV VMOCP2',
             department: 'Phụ sản',
             data: { kham_benh: { "Khám chuyên khoa": 12 } }
         })

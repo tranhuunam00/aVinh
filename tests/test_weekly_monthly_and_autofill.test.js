@@ -25,7 +25,7 @@ async function runTests() {
     const facNames = facilities.map(f => f.name);
     assert(!facNames.includes('cs3'), 'Facility cs3 must be completely removed');
     assert(!facNames.includes('Bệnh viện c'), 'Temporary facility Bệnh viện c must be removed');
-    assert(facNames.includes('Bệnh viện') && facNames.includes('PK OCP1') && facNames.includes('PK OCP2'), 'Standard 3 facilities must exist');
+    assert(facNames.includes('BV VMOCP2') && facNames.includes('PK OCP1') && facNames.includes('PK OCP2'), 'Standard 3 facilities must exist');
     console.log(`  ✅ Clean facilities confirmed: [ ${facNames.join(', ')} ]`);
 
     // 2. Test Admin Login
@@ -58,7 +58,7 @@ async function runTests() {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${capcuuToken}` },
         body: JSON.stringify({
             report_date: testDate,
-            facility: 'Bệnh viện',
+            facility: 'BV VMOCP2',
             department: 'Cấp cứu',
             data: {
                 kham_benh: { "Khám cấp cứu": 25, "Khám chuyên khoa": 15 },
@@ -77,7 +77,7 @@ async function runTests() {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${capcuuToken}` },
         body: JSON.stringify({
             report_date: testDate,
-            facility: 'Bệnh viện',
+            facility: 'BV VMOCP2',
             department: 'Cấp cứu',
             data: {
                 kham_benh: { "Khám cấp cứu": 30 }
@@ -95,7 +95,7 @@ async function runTests() {
         headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${adminToken}` },
         body: JSON.stringify({
             report_date: testDate,
-            facility: 'Bệnh viện',
+            facility: 'BV VMOCP2',
             department: 'Cấp cứu',
             data: {
                 kham_benh: { "Khám cấp cứu": 28, "Khám chuyên khoa": 12 },

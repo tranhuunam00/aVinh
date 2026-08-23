@@ -94,15 +94,16 @@ async function initDatabase() {
         )
     `);
 
-    // Clean temporary/obsolete facilities (e.g. cs3, Bệnh viện c)
+    // Clean temporary/obsolete facilities & rename to standard BV VMOCP2
     await run("DELETE FROM facilities WHERE name IN ('cs3', 'Bệnh viện c')");
-    await run("UPDATE daily_reports SET facility = 'Bệnh viện' WHERE facility IN ('cs3', 'Bệnh viện c')");
-    await run("UPDATE users SET facility = 'Bệnh viện' WHERE facility IN ('cs3', 'Bệnh viện c')");
+    await run("UPDATE facilities SET name = 'BV VMOCP2', description = 'Bệnh Viện Đa Khoa Quốc Tế Vinmec Ocean Park 2' WHERE name IN ('Bệnh viện', 'Bệnh viện Vinmec')");
+    await run("UPDATE daily_reports SET facility = 'BV VMOCP2' WHERE facility IN ('Bệnh viện', 'Bệnh viện Vinmec', 'cs3', 'Bệnh viện c')");
+    await run("UPDATE users SET facility = 'BV VMOCP2' WHERE facility IN ('Bệnh viện', 'Bệnh viện Vinmec', 'cs3', 'Bệnh viện c')");
 
     // Ensure 3 standard facilities always exist
     const now = new Date().toISOString();
     const defaultFacilities = [
-        { name: 'Bệnh viện', desc: 'Bệnh viện Đa Khoa Quốc Tế Vinmec Ocean Park 2' },
+        { name: 'BV VMOCP2', desc: 'Bệnh Viện Đa Khoa Quốc Tế Vinmec Ocean Park 2' },
         { name: 'PK OCP1', desc: 'Phòng khám Đa Khoa Quốc Tế Vinmec Ocean Park 1' },
         { name: 'PK OCP2', desc: 'Phòng khám Đa Khoa Quốc Tế Vinmec Ocean Park 2' }
     ];

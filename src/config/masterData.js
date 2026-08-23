@@ -1,5 +1,10 @@
 const MASTER_DATA = {
-    facilities: ["Bệnh viện", "PK OCP1", "PK OCP2"],
+    facilities: ["BV VMOCP2", "PK OCP1", "PK OCP2"],
+    facility_details: {
+        "BV VMOCP2": "Bệnh Viện Đa Khoa Quốc Tế Vinmec Ocean Park 2",
+        "PK OCP1": "Phòng Khám Đa Khoa Quốc Tế Vinmec Ocean Park 1",
+        "PK OCP2": "Phòng Khám Đa Khoa Quốc Tế Vinmec Ocean Park 2"
+    },
     departments: [
         "Cấp cứu",
         "Khám bệnh",
