@@ -7,3 +7,12 @@ data/*.sqlite-wal
 data/*.sqlite-shm
 dist/data/
 .DS_Store
+
+# Confidential data & documents (Bảo mật dữ liệu)
+worddata/
+data_secure/
+secure_data/
+__pycache__/
+*.pyc
+~$*
+
