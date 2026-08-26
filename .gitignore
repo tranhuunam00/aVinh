@@ -1,18 +1,56 @@
+# Dependencies
 node_modules/
+
+# Logs & Debugging
 logs/
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+
+# Environment & Credentials (Bảo mật tài khoản & API Keys)
 .env
+.env.*
+google-service-account.json
+credentials.json
+*.pem
+*.key
+
+# Database & SQLite files
 data/*.sqlite
 data/*.sqlite-journal
 data/*.sqlite-wal
 data/*.sqlite-shm
 dist/data/
-.DS_Store
 
-# Confidential data & documents (Bảo mật dữ liệu)
+# OS & IDE System Files
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
+*.swp
+
+# Confidential data & documents (Bảo mật dữ liệu tài liệu)
 worddata/
 data_secure/
 secure_data/
-__pycache__/
-*.pyc
+*.tmp
+temp_*/
+
+# MS Office Temporary Lock Files
+~$*.docx
+~$*.xlsx
+~$*.pptx
 ~$*
 
+# Python Cache & Artifacts
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+.pytest_cache/
+
+# Agent Scratch & Temp Storage
+scratch/
+.tempmediaStorage/
+.user_uploaded/

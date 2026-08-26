@@ -153,8 +153,59 @@ def inject_footnote_into_docx(in_docx_path, out_docx_path, footnote_text):
             zout.writestr('word/footnotes.xml', footnotes_xml)
 ```
 
-### Bước 4: Chuyển DOCX Sang PDF Bằng MS Word COM
-Xuất file PDF trực tiếp qua engine của Microsoft Word để đảm bảo layout hiển thị thực tế chính xác 100%:
+## 3. Các Bài Học "Xương Máu" & Gotchas Khi Xử Lý Bảng & Thể Thức
+
+### 3.1. Xử Lý Bảng Phức Tạp (Rowspan / Colspan) Tránh Lỗi Tràn Cột
+- **Nguyên lý OpenXML**: Khi một ô trong hàng có `<w:gridSpan w:val="N"/>`, tổng số cột đại diện trong hàng đó vẫn phải bằng đúng số cột khai báo trong `w:tblGrid`.
+- **Lỗi kinh điển**: Nếu chèn `<w:gridSpan w:val="3"/>` thủ công nhưng vẫn giữ nguyên đủ 10 thẻ `<w:tc>` trong XML của hàng đó, Word / Google Docs sẽ xem hàng đó có `10 + 2 = 12` cột. Hậu quả là các cột sau bị đẩy tràn ra ngoài mép phải trang giấy, làm vỡ hoàn toàn bảng.
+- **Giải pháp**:
+  1. Dùng hàm native `.merge()` của `python-docx`: `table.cell(0, 6).merge(table.cell(0, 8))` (python-docx sẽ tự động xóa 2 thẻ `<w:tc>` thừa).
+  2. Gộp dọc (Rowspan): `table.cell(0, c).merge(table.cell(1, c))`.
+  3. Gộp ô dòng Tổng cộng: `table.cell(last_row, 0).merge(table.cell(last_row, 1))`.
+
+### 3.2. Thiết Lập Section Khổ Ngang (Landscape A4: 297mm × 210mm)
+- Để tạo bảng dự toán 10-12 cột tài chính không bị tràn dòng, cần chuyển Section sang Khổ ngang:
+```python
+sec_land = doc.add_section(WD_SECTION_START.NEW_PAGE)
+sec_land.orientation = WD_ORIENT.LANDSCAPE
+sec_land.page_width = Mm(297)
+sec_land.page_height = Mm(210)
+sec_land.left_margin = Mm(18)
+sec_land.right_margin = Mm(15)
+sec_land.top_margin = Mm(15)
+sec_land.bottom_margin = Mm(15)
+```
+
+### 3.3. Quy Tắc Đường Kẻ Thể Thức & In Nghiêng
+- **Tiêu ngữ `Độc lập - Tự do - Hạnh phúc`**:
+  - Kiểm tra kỹ bản gốc PDF: Đa phần văn bản quy phạm có gạch dưới nét liền; tuy nhiên một số phụ lục/biểu mẫu gốc không có gạch dưới -> Bắt buộc đối soát với PDF gốc qua PyMuPDF trước khi quyết định thêm/bớt đường gạch.
+- **Đường kẻ trích yếu Tờ trình**: Nằm căn giữa ngay dưới nội dung trích yếu, độ dài bằng 1/3 đến 1/2 độ dài dòng chữ.
+- **Chữ in nghiêng**: Chỉ in nghiêng các trường thông tin placeholder như `(Cơ quan trình phê duyệt)`, `(Ký, ghi rõ họ tên, chức vụ và đóng dấu)`. Các phần chữ dẫn hành chính xung quanh phải giữ chữ thường/đứng.
+
+---
+
+## 4. Tự Động Hóa Đồng Bộ Lên Google Drive / Google Docs
+
+Khi cần trình chiếu hoặc cập nhật trực tiếp tài liệu lên Google Drive qua Service Account:
+```python
+from google.oauth2 import service_account
+from googleapiclient.discovery import build
+from googleapiclient.http import MediaFileUpload
+
+creds = service_account.Credentials.from_service_account_file("google-service-account.json", scopes=['https://www.googleapis.com/auth/drive'])
+drive = build('drive', 'v3', credentials=creds)
+
+media = MediaFileUpload("output.docx", mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document', resumable=True)
+drive.files().update(fileId=FILE_ID, media_body=media).execute()
+```
+
+---
+
+## 5. Quy Trình Kiểm Thử Thị Giác (Visual QC)
+1. **Word COM Export**: Chuyển `.docx` sang `.pdf` qua Microsoft Word COM API (đảm bảo hiển thị chuẩn xác nhất như máy người dùng).
+2. **PyMuPDF Rendering**: Kết xuất từng trang PDF thành ảnh PNG 200 DPI.
+3. **So Sánh Bounding Box & Số Trang**: Đảm bảo số trang và vị trí các khối văn bản khớp 1:1, không có dòng rớt (orphan text/signature).
+
 ```python
 import os
 import win32com.client
