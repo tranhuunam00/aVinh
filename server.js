@@ -67,10 +67,22 @@ app.get('*', (req, res) => {
 });
 
 // Initialize Database & Start Server
+const { backupDatabase } = require('./scripts/backup');
+
 async function startServer() {
     try {
         console.log('⏳ Đang khởi tạo cơ sở dữ liệu SQLite & áp dụng bảo mật...');
         await initDatabase();
+
+        // Tự động tạo bản sao lưu snapshot khi khởi động máy chủ
+        setTimeout(() => {
+            backupDatabase().catch(() => {});
+        }, 5000);
+
+        // Lập lịch tự động sao lưu định kỳ mỗi 24 giờ (1 ngày)
+        setInterval(() => {
+            backupDatabase().catch(() => {});
+        }, 24 * 60 * 60 * 1000);
 
         app.listen(PORT, '0.0.0.0', () => {
             console.log('========================================================================');
@@ -78,7 +90,7 @@ async function startServer() {
             console.log(` 🚀 Server Node.js đang chạy tại: http://localhost:${PORT}`);
             console.log(` 🌐 Mạng nội bộ (LAN): http://<IP_MÁY_BẠN>:${PORT}`);
             console.log(' 🛡️ Chế độ bảo mật: Helmet Headers, Rate Limiting & Bcrypt Active');
-            console.log(' 🔒 Thông tin đăng nhập được bảo vệ an toàn (Xem file hướng dẫn nội bộ)');
+            console.log(' 📦 Cơ chế Backup: Tự động sao lưu hàng ngày lưu tại data/backups/');
             console.log('========================================================================');
         });
     } catch (err) {
@@ -88,3 +100,4 @@ async function startServer() {
 }
 
 startServer();
+

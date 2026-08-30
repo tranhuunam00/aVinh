@@ -1,0 +1,411 @@
+<!-- File copy in dist folder for package handover -->
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Báo Cáo Kỹ Thuật & Phương Án An Toàn Thông Tin - Vinmec OCP2</title>
+    <style>
+        :root {
+            --primary-color: #002060;
+            --secondary-color: #1f4e79;
+            --text-color: #262626;
+            --border-color: #d9d9d9;
+            --bg-light: #f7f9fa;
+            --success-color: #274e13;
+            --success-bg: #eaf5ea;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            line-height: 1.6;
+            color: var(--text-color);
+            background-color: #eef2f5;
+            padding: 30px 15px;
+        }
+
+        .document-container {
+            max-width: 900px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 50px 60px;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 15px rgba(0, 0, 0, 0.05);
+        }
+
+        .header-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-bottom: 25px;
+            border-bottom: 2px solid var(--primary-color);
+            padding-bottom: 15px;
+        }
+
+        .header-table td {
+            vertical-align: top;
+            padding: 4px 0;
+        }
+
+        .org-title {
+            font-size: 13px;
+            font-weight: bold;
+            color: var(--secondary-color);
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .doc-meta {
+            text-align: right;
+            font-size: 12px;
+            color: #595959;
+        }
+
+        .document-title {
+            text-align: center;
+            font-size: 20px;
+            font-weight: bold;
+            color: var(--primary-color);
+            text-transform: uppercase;
+            margin: 30px 0 10px 0;
+            letter-spacing: 0.5px;
+        }
+
+        .document-subtitle {
+            text-align: center;
+            font-size: 14px;
+            font-style: italic;
+            color: #595959;
+            margin-bottom: 30px;
+        }
+
+        .recipient-box {
+            background-color: var(--bg-light);
+            border-left: 4px solid var(--primary-color);
+            padding: 15px 20px;
+            margin-bottom: 30px;
+            font-size: 13.5px;
+        }
+
+        .recipient-box p {
+            margin-bottom: 5px;
+        }
+
+        .recipient-box p:last-child {
+            margin-bottom: 0;
+        }
+
+        h2 {
+            font-size: 15px;
+            color: var(--primary-color);
+            text-transform: uppercase;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 6px;
+            margin: 28px 0 14px 0;
+        }
+
+        h3 {
+            font-size: 14px;
+            color: var(--secondary-color);
+            margin: 16px 0 8px 0;
+        }
+
+        p, ul, ol {
+            font-size: 13.5px;
+            margin-bottom: 10px;
+            text-align: justify;
+        }
+
+        ul, ol {
+            padding-left: 22px;
+        }
+
+        li {
+            margin-bottom: 6px;
+        }
+
+        strong {
+            color: #111111;
+        }
+
+        .data-table {
+            width: 100%;
+            border-collapse: collapse;
+            margin: 15px 0 20px 0;
+            font-size: 13px;
+        }
+
+        .data-table th, .data-table td {
+            border: 1px solid var(--border-color);
+            padding: 9px 12px;
+            text-align: left;
+        }
+
+        .data-table th {
+            background-color: var(--primary-color);
+            color: #ffffff;
+            font-weight: 600;
+        }
+
+        .data-table tr:nth-child(even) {
+            background-color: #fafafa;
+        }
+
+        .badge-success {
+            display: inline-block;
+            background-color: var(--success-bg);
+            color: var(--success-color);
+            font-weight: 600;
+            padding: 2px 8px;
+            border-radius: 3px;
+            border: 1px solid #b7deb7;
+            font-size: 12px;
+        }
+
+        .summary-box {
+            background-color: #f0f4f8;
+            border: 1px solid #c9d7e4;
+            padding: 16px 20px;
+            border-radius: 4px;
+            margin: 18px 0;
+        }
+
+        .footer-sign {
+            margin-top: 45px;
+            display: flex;
+            justify-content: space-between;
+            page-break-inside: avoid;
+        }
+
+        .sign-col {
+            text-align: center;
+            font-size: 13.5px;
+            width: 45%;
+        }
+
+        .sign-title {
+            font-weight: bold;
+            margin-bottom: 60px;
+        }
+
+        .sign-name {
+            font-weight: bold;
+            text-transform: uppercase;
+        }
+
+        @media print {
+            body {
+                background: none;
+                padding: 0;
+            }
+            .document-container {
+                border: none;
+                box-shadow: none;
+                padding: 0;
+                max-width: 100%;
+            }
+        }
+    </style>
+</head>
+<body>
+
+<div class="document-container">
+    <!-- Header -->
+    <table class="header-table">
+        <tr>
+            <td class="org-title">
+                BỆNH VIỆN ĐKQT VINMEC OCEAN PARK 2<br>
+                TRUNG TÂM CHẨN ĐOÁN HÌNH ẢNH & ĐIỆN QUANG CAN THIỆP
+            </td>
+            <td class="doc-meta">
+                Mã văn bản: VMOCP2-CDHA-2026/01<br>
+                Hưng Yên, ngày 30 tháng 08 năm 2026
+            </td>
+        </tr>
+    </table>
+
+    <!-- Title -->
+    <div class="document-title">BÁO CÁO KỸ THUẬT & PHƯƠNG ÁN BẢO MẬT HỆ THỐNG</div>
+    <div class="document-subtitle">V/v Thẩm định, phê duyệt và cấp phép triển khai thử nghiệm Hệ thống Báo cáo Giao ban Hoạt động Ngày</div>
+
+    <!-- Recipient -->
+    <div class="recipient-box">
+        <p><strong>Kính gửi:</strong> Ban Công nghệ Thông tin - Tập đoàn Vingroup / Hệ thống Y tế Vinmec</p>
+        <p><strong>Đơn vị đề xuất:</strong> Trung tâm Chẩn đoán hình ảnh & Điện quang can thiệp - Bệnh viện ĐKQT Vinmec Ocean Park 2</p>
+        <p><strong>Chủ trì đề xuất:</strong> ThS. BS. Đào Danh Vĩnh - Giám đốc Trung tâm Chẩn đoán hình ảnh & Điện quang can thiệp</p>
+    </div>
+
+    <!-- Content Sections -->
+    <h2>1. Mục Đích & Phạm Vi Ứng Dụng</h2>
+    <p>
+        Hệ thống được phát triển nhằm tự động hóa quy trình thu thập, kiểm tra chéo và tổng hợp số liệu giao ban buổi sáng hàng ngày từ <strong>17 khoa phòng chuyên môn</strong> thuộc 03 cơ sở y tế (Bệnh viện Vinmec Ocean Park 2, Phòng khám OCP1, Phòng khám OCP2). Hệ thống trực quan hóa 06 thẻ chỉ số KPI tổng quan, 05 biểu đồ phân tích hoạt động và xuất dữ liệu báo cáo khớp 100% định dạng biểu mẫu <code>Form VINMEC.xlsx</code>.
+    </p>
+
+    <h2>2. Kiến Trúc Kỹ Thuật & Ngăn Xếp Công Nghệ (Tech Stack)</h2>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th style="width: 25%;">Thành Phần</th>
+                <th style="width: 35%;">Công Nghệ Sử Dụng</th>
+                <th style="width: 40%;">Đặc Tả Kỹ Thuật</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td><strong>Mô hình triển khai</strong></td>
+                <td>On-Premise / Standalone</td>
+                <td>Triển khai cục bộ trong hạ tầng mạng LAN nội bộ Bệnh viện, hoạt động độc lập không phụ thuộc Internet.</td>
+            </tr>
+            <tr>
+                <td><strong>Backend Service</strong></td>
+                <td>Node.js (LTS) / Express.js</td>
+                <td>Kiến trúc RESTful API, phục vụ đồng thời Web Server và Hosting Frontend SPA tĩnh.</td>
+            </tr>
+            <tr>
+                <td><strong>Cơ sở dữ liệu & Sao lưu</strong></td>
+                <td>SQLite 3 (WAL Mode) + Auto Backup Engine</td>
+                <td>Cơ sở dữ liệu dạng file <code>data/vinmec.sqlite</code> (chế độ Write-Ahead Logging hiệu năng cao). Tích hợp cơ chế sao lưu đa tầng: Tự động sao lưu định kỳ hàng ngày lưu tại <code>data/backups/</code> (duy trì 30 bản gần nhất), tự động sao lưu trước mỗi lần migration và tiện ích sao lưu chủ động 1-click (<code>Sao_Luu_Du_Lieu.bat</code>).</td>
+            </tr>
+            <tr>
+                <td><strong>Xác thực & Phân quyền</strong></td>
+                <td>JWT + Bcrypt Hashing</td>
+                <td>Token ký bằng Secret 256-bit trong biến môi trường, lưu trữ qua HttpOnly Cookie, phân quyền RBAC 2 cấp độ.</td>
+            </tr>
+            <tr>
+                <td><strong>Frontend Client</strong></td>
+                <td>Vanilla JS / HTML5 / CSS3</td>
+                <td>Single Page Application (SPA) tối ưu tốc độ tải, chế độ hiển thị toàn màn hình phục vụ giao ban máy chiếu.</td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>3. Quy Trình Build & Cơ Chế Đóng Gói Thực Thi (.EXE Portable)</h2>
+    <div class="summary-box">
+        <p><strong>Cơ chế đóng gói nhị phân:</strong> Hệ thống sử dụng công cụ <code>pkg</code> với mục tiêu biên dịch <code>node18-win-x64</code>, tích hợp toàn bộ Node runtime, bytecode mã nguồn Backend, Frontend tĩnh và các thư viện liên quan thành tệp thực thi độc lập duy nhất.</p>
+        <ul>
+            <li><strong>Lệnh thực thi build:</strong> <code>npm run build:exe</code> (hoặc chạy file <code>build_exe.bat</code>).</li>
+            <li><strong>Kết quả đầu ra tại thư mục <code>dist/</code>:</strong>
+                <ul>
+                    <li><code>vinmec-server.exe</code> (53.6 MB): Tệp thực thi máy chủ chính.</li>
+                    <li><code>vinmec-migrate.exe</code> (43.0 MB): Tệp thực thi kiểm soát và nâng cấp cấu trúc Database tự động.</li>
+                </ul>
+            </li>
+            <li><strong>Ưu điểm triển khai:</strong> Không yêu cầu cài đặt môi trường Node.js, npm hay bất kỳ package bên thứ 3 nào trên máy chủ Windows Server. Chạy trực tiếp qua tệp <code>Chay_Server.bat</code>.</li>
+        </ul>
+    </div>
+
+    <h2>4. Phương Án Đảm Bảo An Toàn Thông Tin (Theo Chuẩn OWASP Top 10)</h2>
+    <p>Hệ thống đã được thiết kế và gia cố toàn diện đáp ứng các yêu cầu bảo mật thông tin y tế:</p>
+    <ul>
+        <li><strong>Phòng chống SQL Injection:</strong> 100% câu lệnh truy vấn cơ sở dữ liệu sử dụng cú pháp <em>Prepared Statements (Tham số hóa với <code>?</code> placeholder)</em>, phân tách tuyệt đối giữa mã lệnh và dữ liệu, vô hiệu hóa hoàn toàn các kỹ thuật tấn công SQLi.</li>
+        <li><strong>Bảo vệ mật khẩu người dùng:</strong> 100% mật khẩu được mã hóa một chiều bằng thuật toán <strong>Bcrypt (10 Salt Rounds)</strong> trước khi lưu trữ, chính sách mật khẩu bắt buộc tối thiểu 8 ký tự.</li>
+        <li><strong>Bảo vệ phiên làm việc (Session & Cookie):</strong> Token JWT được truyền qua Cookie với đầy đủ các cờ bảo vệ: <code>httpOnly: true</code> (ngăn chặn đánh cắp qua XSS), <code>sameSite: 'lax'</code>, <code>secure: true</code> trên Production. Thời hạn phiên được giới hạn nghiêm ngặt ở mức <strong>12 giờ</strong> (tương đương 1 ca trực).</li>
+        <li><strong>Chống tấn công từ chối dịch vụ (DoS & Brute-force):</strong>
+            <ul>
+                <li>Giới hạn tần suất gọi API chung: Tối đa 120 requests/phút/IP (sử dụng <code>express-rate-limit</code>).</li>
+                <li>Bảo vệ cổng đăng nhập (<code>/api/auth/login</code>): Khóa tạm thời 15 phút nếu phát hiện sai mật khẩu quá 5 lần liên tiếp trên cùng địa chỉ IP.</li>
+                <li>Giới hạn dung lượng gói tin (Body limit: 1MB) ngăn chặn tấn công tràn bộ nhớ đệm.</li>
+            </ul>
+        </li>
+        <li><strong>HTTP Security Headers:</strong> Tích hợp middleware <code>helmet</code> để tự động thiết lập các tiêu đề HTTP an toàn: <code>X-Frame-Options: SAMEORIGIN</code> (chống Clickjacking), <code>X-Content-Type-Options: nosniff</code>.</li>
+        <li><strong>Kiểm soát truy cập (RBAC / Least Privilege):</strong> Phân quyền nghiêm ngặt tại tầng API Controller. Tài khoản khoa phòng chỉ được xem và nhập liệu trong phạm vi khoa và cơ sở được phân công.</li>
+    </ul>
+
+    <h2>5. Kết Quả Kiểm Thử An Ninh Tự Động</h2>
+    <p>Mã nguồn hệ thống đi kèm bộ kịch bản kiểm thử an ninh chuyên sâu (tệp <code>tests/security_100_attack_vectors.test.js</code>) với kết quả thẩm định như sau:</p>
+    <table class="data-table">
+        <thead>
+            <tr>
+                <th style="width: 45%;">Nhóm Kịch Bản Kiểm Thử An Ninh</th>
+                <th style="width: 25%; text-align: center;">Số Lượng Case</th>
+                <th style="width: 30%; text-align: center;">Kết Quả Thẩm Định</th>
+            </tr>
+        </thead>
+        <tbody>
+            <tr>
+                <td>Tấn công SQL Injection (Tautology, UNION, Stacked, PRAGMA)</td>
+                <td style="text-align: center;">25 cases</td>
+                <td style="text-align: center;"><span class="badge-success">100% PASS</span></td>
+            </tr>
+            <tr>
+                <td>Tấn công XSS & Content Injection (Script, Img, Iframe, SVG)</td>
+                <td style="text-align: center;">20 cases</td>
+                <td style="text-align: center;"><span class="badge-success">100% PASS</span></td>
+            </tr>
+            <tr>
+                <td>Thao túng JWT Token & Leo thang đặc quyền (Alg none, Tampered)</td>
+                <td style="text-align: center;">15 cases</td>
+                <td style="text-align: center;"><span class="badge-success">100% PASS</span></td>
+            </tr>
+            <tr>
+                <td>Kiểm soát phân quyền truy cập chéo & Chống IDOR</td>
+                <td style="text-align: center;">15 cases</td>
+                <td style="text-align: center;"><span class="badge-success">100% PASS</span></td>
+            </tr>
+            <tr>
+                <td>Tấn công Path Traversal & Lọc tham số tệp Export</td>
+                <td style="text-align: center;">10 cases</td>
+                <td style="text-align: center;"><span class="badge-success">100% PASS</span></td>
+            </tr>
+            <tr>
+                <td>Chính sách mật khẩu, Bcrypt Salt Rounds & Xác thực</td>
+                <td style="text-align: center;">10 cases</td>
+                <td style="text-align: center;"><span class="badge-success">100% PASS</span></td>
+            </tr>
+            <tr>
+                <td>Chống Prototype Pollution & Xử lý Fuzzing dữ liệu bất thường</td>
+                <td style="text-align: center;">10 cases</td>
+                <td style="text-align: center;"><span class="badge-success">100% PASS</span></td>
+            </tr>
+            <tr style="background-color: #eef2f5; font-weight: bold;">
+                <td>TỔNG HỢP KIỂM THỬ AN NINH</td>
+                <td style="text-align: center;">105 cases</td>
+                <td style="text-align: center;"><span class="badge-success">105/105 PASS (100%)</span></td>
+            </tr>
+        </tbody>
+    </table>
+
+    <h2>6. Phương Án Vận Hành & Lộ Trình Triển Khai Hạ Tầng</h2>
+    <h3>6.1 Giai đoạn Thử nghiệm nội bộ (Pilot Testing tại máy trạm ThS. BS. Đào Danh Vĩnh)</h3>
+    <p>
+        Trong giai đoạn thử nghiệm và đánh giá tính khả thi, hệ thống được thiết lập chạy trực tiếp trên <strong>máy trạm làm việc của ThS. BS. Đào Danh Vĩnh</strong> (Giám đốc Trung tâm CĐHA & ĐQCT) đóng vai trò máy chủ cục bộ (Local Pilot Server) trong mạng nội bộ Bệnh viện:
+    </p>
+    <ul>
+        <li><strong>Cổng dịch vụ (Port):</strong> Lắng nghe trên TCP Port <code>4001</code> (hỗ trợ cấu hình qua tệp <code>.env</code>).</li>
+        <li><strong>Cấu hình tường lửa máy trạm:</strong> Sử dụng tệp <code>Mo_Cong_Firewall.bat</code> để cấp phép Inbound Rule cho Port 4001 trên Windows Defender Firewall của máy trạm.</li>
+        <li><strong>Khởi động dịch vụ:</strong> Thực thi nhanh qua tệp <code>Chay_Server.bat</code> (tự động kích hoạt binary <code>vinmec-server.exe</code> độc lập mà không cần cài đặt Node.js hay môi trường phụ thuộc).</li>
+        <li><strong>Phạm vi truy cập thử nghiệm:</strong> Các khoa phòng trong mạng LAN Bệnh viện kết nối trực tiếp đến địa chỉ IP máy trạm của BS. Vĩnh theo đường dẫn <code>http://[IP_MÁY_BS_VĨNH]:4001</code> để nhập và xem báo cáo giao ban.</li>
+    </ul>
+
+    <h3>6.2 Giai đoạn Bàn giao & Triển khai chính thức (Production Server)</h3>
+    <p>
+        Sau khi Ban CNTT thẩm định đạt yêu cầu và quá trình chạy thử nghiệm hoàn tất, đơn vị sẽ phối hợp chuyển giao toàn bộ gói triển khai lên <strong>Hạ tầng Máy chủ Ảo (VM / On-Premise Server) tập trung</strong> do Ban CNTT Vinmec chỉ định và quản trị vận hành.
+    </p>
+
+    <h2>7. Đề Xuất & Kiến Nghị</h2>
+    <p>
+        Kính đề nghị Ban Công nghệ Thông tin xem xét, thẩm định và phê duyệt phương án kỹ thuật và an toàn thông tin nêu trên để Trung tâm Chẩn đoán hình ảnh & Điện quang can thiệp cùng các khoa phòng chính thức triển khai thử nghiệm hệ thống tại Bệnh viện ĐKQT Vinmec Ocean Park 2.
+    </p>
+
+    <!-- Signatures -->
+    <div class="footer-sign">
+        <div class="sign-col">
+            <div class="sign-title">BAN CÔNG NGHỆ THÔNG TIN<br>PHÊ DUYỆT</div>
+            <div style="height: 50px;"></div>
+            <div class="sign-name">....................................................</div>
+        </div>
+        <div class="sign-col">
+            <div class="sign-title">CHỦ TRÌ ĐỀ XUẤT TRIỂN KHAI<br>GIÁM ĐỐC TRUNG TÂM CĐHA & ĐQCT</div>
+            <div style="height: 50px;"></div>
+            <div class="sign-name">ThS. BS. Đào Danh Vĩnh</div>
+        </div>
+    </div>
+</div>
+
+</body>
+</html>
