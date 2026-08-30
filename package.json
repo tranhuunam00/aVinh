@@ -14,7 +14,8 @@
     "migrate": "node scripts/migrator.js",
     "migrate:status": "node scripts/migrator.js --status",
     "build:exe": "npx pkg . --targets node18-win-x64 --output dist/vinmec-server.exe && npx pkg migrate.js --targets node18-win-x64 --output dist/vinmec-migrate.exe",
-    "test": "node tests/all_6_kpis.test.js"
+    "test": "node tests/all_6_kpis.test.js",
+    "test:security": "node tests/security_100_attack_vectors.test.js"
   },
   "bin": "server.js",
   "pkg": {
@@ -39,8 +40,11 @@
     "bcryptjs": "^2.4.3",
     "cookie-parser": "^1.4.7",
     "cors": "^2.8.5",
+    "dotenv": "^17.4.2",
     "exceljs": "^4.4.0",
     "express": "^4.21.2",
+    "express-rate-limit": "^8.7.0",
+    "helmet": "^8.3.0",
     "jsonwebtoken": "^9.0.2",
     "sqlite3": "^5.1.7"
   }

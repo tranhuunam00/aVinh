@@ -1,11 +1,21 @@
 const express = require('express');
 const router = express.Router();
 const bcrypt = require('bcryptjs');
+const rateLimit = require('express-rate-limit');
 const { get, run } = require('../config/database');
 const { generateToken, requireAuth } = require('../middleware/auth');
 
+// Brute-force Login Protection (Tối đa 5 lần thử trong 15 phút / IP)
+const loginLimiter = rateLimit({
+    windowMs: parseInt(process.env.AUTH_LOGIN_WINDOW_MS) || 15 * 60 * 1000,
+    max: parseInt(process.env.AUTH_LOGIN_MAX_ATTEMPTS) || 5,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Bạn đã thử đăng nhập quá nhiều lần. Vui lòng chờ 15 phút trước khi thử lại.' }
+});
+
 // POST /api/auth/login
-router.post('/login', async (req, res) => {
+router.post('/login', loginLimiter, async (req, res) => {
     try {
         const { username, password } = req.body;
 
@@ -29,10 +39,12 @@ router.post('/login', async (req, res) => {
 
         const token = generateToken(user);
 
-        // Set secure cookie as well
+        // Set HttpOnly secure cookie (Chống XSS đánh cắp Token, hạn 12h)
         res.cookie('vinmec_token', token, {
-            httpOnly: false,
-            maxAge: 30 * 24 * 60 * 60 * 1000 // 30 days
+            httpOnly: true,
+            secure: process.env.NODE_ENV === 'production',
+            sameSite: 'lax',
+            maxAge: 12 * 60 * 60 * 1000 // 12 tiếng
         });
 
         return res.json({
@@ -49,8 +61,14 @@ router.post('/login', async (req, res) => {
         });
     } catch (err) {
         console.error('Login error:', err);
-        return res.status(500).json({ error: 'Lỗi máy chủ khi đăng nhập: ' + err.message });
+        return res.status(500).json({ error: 'Lỗi máy chủ khi đăng nhập. Vui lòng thử lại sau.' });
     }
+});
+
+// POST /api/auth/logout
+router.post('/logout', (req, res) => {
+    res.clearCookie('vinmec_token');
+    return res.json({ success: true, message: 'Đã đăng xuất an toàn khỏi hệ thống.' });
 });
 
 // GET /api/auth/me
@@ -62,7 +80,8 @@ router.get('/me', requireAuth, async (req, res) => {
         }
         return res.json({ user });
     } catch (err) {
-        return res.status(500).json({ error: err.message });
+        console.error('Get me error:', err);
+        return res.status(500).json({ error: 'Lỗi khi tải thông tin người dùng.' });
     }
 });
 
@@ -74,8 +93,8 @@ router.post('/change-password', requireAuth, async (req, res) => {
             return res.status(400).json({ error: 'Vui lòng nhập mật khẩu hiện tại và mật khẩu mới' });
         }
 
-        if (new_password.length < 6) {
-            return res.status(400).json({ error: 'Mật khẩu mới phải có tối thiểu 6 ký tự' });
+        if (new_password.length < 8) {
+            return res.status(400).json({ error: 'Mật khẩu mới phải có tối thiểu 8 ký tự để đảm bảo an toàn' });
         }
 
         const user = await get("SELECT * FROM users WHERE id = ?", [req.user.id]);
@@ -92,7 +111,8 @@ router.post('/change-password', requireAuth, async (req, res) => {
 
         return res.json({ success: true, message: 'Đổi mật khẩu thành công!' });
     } catch (err) {
-        return res.status(500).json({ error: err.message });
+        console.error('Change password error:', err);
+        return res.status(500).json({ error: 'Lỗi khi thay đổi mật khẩu.' });
     }
 });
 

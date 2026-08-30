@@ -8,7 +8,7 @@ const { requireAuth, requireAdmin } = require('../middleware/auth');
 router.use(requireAuth, requireAdmin);
 
 // GET /api/users - List all users
-router.router = router.get('/', async (req, res) => {
+router.get('/', async (req, res) => {
     try {
         const users = await all(`
             SELECT id, username, full_name, role, facility, department, is_active, created_at, updated_at
@@ -17,7 +17,8 @@ router.router = router.get('/', async (req, res) => {
         `);
         return res.json({ users });
     } catch (err) {
-        return res.status(500).json({ error: 'Lỗi tải danh sách người dùng: ' + err.message });
+        console.error('Fetch users error:', err);
+        return res.status(500).json({ error: 'Lỗi khi tải danh sách người dùng.' });
     }
 });
 
@@ -30,8 +31,8 @@ router.post('/', async (req, res) => {
             return res.status(400).json({ error: 'Vui lòng điền đầy đủ tên đăng nhập, mật khẩu và họ tên' });
         }
 
-        if (password.length < 6) {
-            return res.status(400).json({ error: 'Mật khẩu phải có tối thiểu 6 ký tự' });
+        if (password.length < 8) {
+            return res.status(400).json({ error: 'Mật khẩu phải có tối thiểu 8 ký tự để đảm bảo bảo mật' });
         }
 
         const existing = await get("SELECT id FROM users WHERE username = ?", [username.trim()]);
@@ -59,7 +60,7 @@ router.post('/', async (req, res) => {
         });
     } catch (err) {
         console.error('Create user error:', err);
-        return res.status(500).json({ error: 'Lỗi máy chủ khi tạo tài khoản: ' + err.message });
+        return res.status(500).json({ error: 'Lỗi máy chủ khi tạo tài khoản.' });
     }
 });
 
@@ -76,11 +77,11 @@ router.put('/:id', async (req, res) => {
 
         const now = new Date().toISOString();
         let passHash = targetUser.password_hash;
-        if (new_password && new_password.trim().length >= 6) {
+        if (new_password && new_password.trim().length >= 8) {
             const salt = bcrypt.genSaltSync(10);
             passHash = bcrypt.hashSync(new_password.trim(), salt);
-        } else if (new_password && new_password.trim().length > 0 && new_password.trim().length < 6) {
-            return res.status(400).json({ error: 'Mật khẩu mới nếu đổi phải có tối thiểu 6 ký tự!' });
+        } else if (new_password && new_password.trim().length > 0 && new_password.trim().length < 8) {
+            return res.status(400).json({ error: 'Mật khẩu mới nếu đổi phải có tối thiểu 8 ký tự!' });
         }
 
         // Do not demote default admin
@@ -106,7 +107,8 @@ router.put('/:id', async (req, res) => {
 
         return res.json({ success: true, message: `Đã cập nhật thông tin tài khoản "${targetUser.username}" thành công!` });
     } catch (err) {
-        return res.status(500).json({ error: err.message });
+        console.error('Update user error:', err);
+        return res.status(500).json({ error: 'Lỗi khi cập nhật người dùng.' });
     }
 });
 
@@ -116,8 +118,8 @@ router.post('/:id/reset-password', async (req, res) => {
         const userId = parseInt(req.params.id);
         const { new_password } = req.body;
 
-        if (!new_password || new_password.length < 6) {
-            return res.status(400).json({ error: 'Mật khẩu mới phải có tối thiểu 6 ký tự' });
+        if (!new_password || new_password.length < 8) {
+            return res.status(400).json({ error: 'Mật khẩu mới phải có tối thiểu 8 ký tự' });
         }
 
         const targetUser = await get("SELECT * FROM users WHERE id = ?", [userId]);
@@ -136,7 +138,8 @@ router.post('/:id/reset-password', async (req, res) => {
             message: `Đã đặt lại mật khẩu cho tài khoản "${targetUser.username}" thành công!`
         });
     } catch (err) {
-        return res.status(500).json({ error: err.message });
+        console.error('Reset password error:', err);
+        return res.status(500).json({ error: 'Lỗi khi đặt lại mật khẩu.' });
     }
 });
 
@@ -157,7 +160,8 @@ router.delete('/:id', async (req, res) => {
         await run("DELETE FROM users WHERE id = ?", [userId]);
         return res.json({ success: true, message: `Đã xóa tài khoản "${targetUser.username}"` });
     } catch (err) {
-        return res.status(500).json({ error: err.message });
+        console.error('Delete user error:', err);
+        return res.status(500).json({ error: 'Lỗi khi xóa tài khoản người dùng.' });
     }
 });
 

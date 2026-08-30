@@ -117,7 +117,7 @@ async function initDatabase() {
             VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)
         `, ['admin', adminHash, 'Quản Trị Viên Hệ Thống (Admin)', 'admin', 'ALL', 'ALL', 1, now, now]);
         
-        console.log('👑 Đã tạo tài khoản SUPER ADMIN mặc định: username=admin | password=Vinmec@2026');
+        console.log('👑 Đã khởi tạo tài khoản SUPER ADMIN (username=admin). Vui lòng đổi mật khẩu ngay trong lần đầu đăng nhập!');
     }
 
     // 6. Cập nhật & Khởi tạo chuẩn 17 Tài Khoản Khoa (baocao_tenkhoa) nếu chưa có

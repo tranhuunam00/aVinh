@@ -1,6 +1,11 @@
 const jwt = require('jsonwebtoken');
 
-const JWT_SECRET = process.env.JWT_SECRET || 'VINMEC_OCP2_SECRET_KEY_@2026';
+const JWT_SECRET = process.env.JWT_SECRET || 'f98a23c8e4129b015389d34208aef51bc4798e3514a9c68702ef63b418a096c1';
+const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '12h';
+
+if (process.env.NODE_ENV === 'production' && !process.env.JWT_SECRET) {
+    console.warn('⚠️ [CẢNH BÁO BẢO MẬT] Chưa thiết lập JWT_SECRET trong file .env trên môi trường Production!');
+}
 
 function generateToken(user) {
     return jwt.sign(
@@ -13,7 +18,7 @@ function generateToken(user) {
             department: user.department
         },
         JWT_SECRET,
-        { expiresIn: '30d' }
+        { expiresIn: JWT_EXPIRES_IN }
     );
 }
 

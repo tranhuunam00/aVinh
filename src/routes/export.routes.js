@@ -10,9 +10,12 @@ router.use(requireAdmin);
 router.get('/excel', async (req, res) => {
     try {
         const { date, facility } = req.query;
+
+        // Sanitize date parameter for safe file naming
+        const safeDate = (date && /^[0-9\-]+$/.test(date)) ? date : 'Tat_Ca';
         const workbook = await generateVinmecExcel(date, facility);
 
-        const filename = `Bao_Cao_Vinmec_OCP2_${date || 'Tat_Ca'}.xlsx`;
+        const filename = `Bao_Cao_Vinmec_OCP2_${safeDate}.xlsx`;
 
         res.setHeader(
             'Content-Type',
@@ -24,7 +27,7 @@ router.get('/excel', async (req, res) => {
         res.end();
     } catch (err) {
         console.error('Export Excel error:', err);
-        res.status(500).json({ error: 'Lỗi xuất file Excel: ' + err.message });
+        res.status(500).json({ error: 'Lỗi khi xuất file Excel.' });
     }
 });
 

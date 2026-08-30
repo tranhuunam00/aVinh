@@ -1,7 +1,10 @@
+require('dotenv').config();
 const fs = require('fs');
 const express = require('express');
 const path = require('path');
 const cors = require('cors');
+const helmet = require('helmet');
+const rateLimit = require('express-rate-limit');
 const cookieParser = require('cookie-parser');
 const { initDatabase } = require('./src/config/database');
 
@@ -15,11 +18,33 @@ const facilityRoutes = require('./src/routes/facility.routes');
 const app = express();
 const PORT = process.env.PORT || 4001;
 
-// Middleware
+// Trust first proxy when running behind reverse proxy / load balancer (Nginx)
+app.set('trust proxy', 1);
+
+// 1. Security Headers via Helmet (OWASP recommended)
+app.use(helmet({
+    contentSecurityPolicy: false, // Tương thích SPA tĩnh
+    crossOriginEmbedderPolicy: false
+}));
+
+// 2. CORS Configuration
 app.use(cors());
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+
+// 3. Request Body Limit (Chống tấn công tràn bộ nhớ DoS / Payload Buffer Overflow)
+const bodyLimit = process.env.BODY_LIMIT || '1mb';
+app.use(express.json({ limit: bodyLimit }));
+app.use(express.urlencoded({ extended: true, limit: bodyLimit }));
 app.use(cookieParser());
+
+// 4. Global API Rate Limiting (Chống Spam & DDoS theo IP)
+const apiLimiter = rateLimit({
+    windowMs: parseInt(process.env.API_RATE_LIMIT_WINDOW_MS) || 60 * 1000,
+    max: parseInt(process.env.API_RATE_LIMIT_MAX) || 120,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: { error: 'Hệ thống phát hiện quá nhiều yêu cầu từ IP của bạn. Vui lòng chờ 1 phút trước khi thử lại.' }
+});
+app.use('/api/', apiLimiter);
 
 // Serve Static Frontend (Support both bundled pkg snapshot and external public folder)
 const staticPath = (process.pkg && fs.existsSync(path.join(path.dirname(process.execPath), 'public')))
@@ -44,16 +69,16 @@ app.get('*', (req, res) => {
 // Initialize Database & Start Server
 async function startServer() {
     try {
-        console.log('⏳ Đang khởi tạo cơ sở dữ liệu SQLite...');
+        console.log('⏳ Đang khởi tạo cơ sở dữ liệu SQLite & áp dụng bảo mật...');
         await initDatabase();
 
         app.listen(PORT, '0.0.0.0', () => {
             console.log('========================================================================');
-            console.log(' 🏥 HỆ THỐNG BÁO CÁO GIAO BAN NGÀY - PHÒNG KẾ HOẠCH TỔNG HỢP');
+            console.log(' 🏥 HỆ THỐNG BÁO CÁO GIAO BAN NGÀY - BỆNH VIỆN ĐKQT VINMEC OCP2');
             console.log(` 🚀 Server Node.js đang chạy tại: http://localhost:${PORT}`);
             console.log(` 🌐 Mạng nội bộ (LAN): http://<IP_MÁY_BẠN>:${PORT}`);
-            console.log(' 👑 Tài khoản SUPER ADMIN: username=admin | password=Vinmec@2026');
-            console.log(' 🏥 17 Tài khoản khoa: username=baocao_<tenkhoa> | password=123456');
+            console.log(' 🛡️ Chế độ bảo mật: Helmet Headers, Rate Limiting & Bcrypt Active');
+            console.log(' 🔒 Thông tin đăng nhập được bảo vệ an toàn (Xem file hướng dẫn nội bộ)');
             console.log('========================================================================');
         });
     } catch (err) {

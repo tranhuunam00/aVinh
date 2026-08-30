@@ -10,7 +10,7 @@ router.get('/', async (req, res) => {
         return res.json({ facilities: rows });
     } catch (err) {
         console.error('Fetch facilities error:', err);
-        return res.status(500).json({ error: 'Lỗi tải danh sách cơ sở: ' + err.message });
+        return res.status(500).json({ error: 'Lỗi khi tải danh sách cơ sở.' });
     }
 });
 
@@ -46,7 +46,7 @@ router.post('/', requireAuth, requireAdmin, async (req, res) => {
         });
     } catch (err) {
         console.error('Create facility error:', err);
-        return res.status(500).json({ error: 'Lỗi tạo cơ sở: ' + err.message });
+        return res.status(500).json({ error: 'Lỗi khi tạo mới cơ sở.' });
     }
 });
 
@@ -96,7 +96,7 @@ router.put('/:id', requireAuth, requireAdmin, async (req, res) => {
         });
     } catch (err) {
         console.error('Update facility error:', err);
-        return res.status(500).json({ error: 'Lỗi cập nhật cơ sở: ' + err.message });
+        return res.status(500).json({ error: 'Lỗi khi cập nhật thông tin cơ sở.' });
     }
 });
 
@@ -131,7 +131,7 @@ router.delete('/:id', requireAuth, requireAdmin, async (req, res) => {
         });
     } catch (err) {
         console.error('Delete facility error:', err);
-        return res.status(500).json({ error: 'Lỗi xóa cơ sở: ' + err.message });
+        return res.status(500).json({ error: 'Lỗi khi xóa cơ sở.' });
     }
 });
 

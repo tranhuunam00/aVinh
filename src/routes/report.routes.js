@@ -114,7 +114,7 @@ router.get('/', async (req, res) => {
         return res.json({ reports: results });
     } catch (err) {
         console.error('Fetch reports error:', err);
-        return res.status(500).json({ error: 'Lỗi tải danh sách báo cáo: ' + err.message });
+        return res.status(500).json({ error: 'Lỗi khi tải danh sách báo cáo.' });
     }
 });
 
@@ -189,7 +189,7 @@ router.post('/', async (req, res) => {
         }
     } catch (err) {
         console.error('Save report error:', err);
-        return res.status(500).json({ error: 'Lỗi khi lưu báo cáo: ' + err.message });
+        return res.status(500).json({ error: 'Lỗi khi lưu báo cáo dữ liệu.' });
     }
 });
 
@@ -210,7 +210,8 @@ router.delete('/:id', async (req, res) => {
         await run("DELETE FROM daily_reports WHERE id = ?", [reportId]);
         return res.json({ success: true, message: 'Đã xóa bản ghi báo cáo thành công' });
     } catch (err) {
-        return res.status(500).json({ error: err.message });
+        console.error('Delete report error:', err);
+        return res.status(500).json({ error: 'Lỗi khi xóa bản ghi báo cáo.' });
     }
 });
 

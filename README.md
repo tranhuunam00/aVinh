@@ -36,13 +36,16 @@ Khi chỉnh sửa code Frontend / Backend và muốn gen lại file `.exe` mới
 
 ---
 
-## 👑 4. Thông Tin Tài Khoản
+## 👑 4. Thông Tin Tài Khoản & Khuyến Cáo Bảo Mật (Vin IT Standard)
+
+> [!WARNING]
+> **Khuyến Cáo An Ninh Bệnh Viện**: Sau khi khởi tạo hệ thống lần đầu trên máy chủ Production, Quản trị viên và người dùng các khoa bắt buộc phải tiến hành đổi mật khẩu mặc định ngay tại menu hồ sơ người dùng.
 
 ### 4.1 Tài Khoản SUPER ADMIN:
 * **Tên đăng nhập**: `admin`
-* **Mật khẩu**: `Vinmec@2026`
+* **Mật khẩu khởi tạo ban đầu**: `Vinmec@2026` *(Bắt buộc đổi sau khi nhận bàn giao)*
 
-### 4.2 17 Tài Khoản Khoa Chuyên Môn (Mật khẩu mặc định: `123456`):
+### 4.2 17 Tài Khoản Khoa Chuyên Môn (Mật khẩu khởi tạo ban đầu: `123456`):
 - `baocao_capcuu` (Khoa Cấp Cứu)
 - `baocao_khambenh` (Khoa Khám Bệnh)
 - `baocao_ranghammat` (Khoa Răng Hàm Mặt)

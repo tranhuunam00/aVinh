@@ -202,7 +202,7 @@ router.get('/', requireAuth, async (req, res) => {
         });
     } catch (err) {
         console.error('Dashboard daily error:', err);
-        return res.status(500).json({ error: 'Lỗi máy chủ khi tải số liệu Dashboard: ' + err.message });
+        return res.status(500).json({ error: 'Lỗi máy chủ khi tải số liệu Dashboard.' });
     }
 });
 
@@ -312,7 +312,7 @@ router.get('/weekly', requireAuth, async (req, res) => {
         });
     } catch (err) {
         console.error('Dashboard weekly error:', err);
-        return res.status(500).json({ error: 'Lỗi tải số liệu báo cáo tuần: ' + err.message });
+        return res.status(500).json({ error: 'Lỗi khi tải số liệu báo cáo tuần.' });
     }
 });
 
@@ -406,7 +406,7 @@ router.get('/monthly', requireAuth, async (req, res) => {
         });
     } catch (err) {
         console.error('Dashboard monthly error:', err);
-        return res.status(500).json({ error: 'Lỗi tải số liệu báo cáo tháng: ' + err.message });
+        return res.status(500).json({ error: 'Lỗi khi tải số liệu báo cáo tháng.' });
     }
 });
 
